@@ -61,3 +61,6 @@ export const useAppStore = create<AppState>()(
     }
   )
 )
+
+// Export meeting store
+export { useMeetingStore } from './meetingStore'
