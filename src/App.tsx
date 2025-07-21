@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import { ErrorBoundary, RouterErrorBoundary } from '@/components/layout/ErrorBoundary'
 import { ThemeProvider } from '@/components/layout/ThemeProvider'
@@ -6,6 +7,7 @@ import { AppLayout } from '@/components/layout/AppLayout'
 import { Dashboard } from '@/components/Dashboard'
 import { MeetingWorkspace } from '@/components/meeting/MeetingWorkspace'
 import { Settings } from '@/components/settings/Settings'
+import { useMeetingStore } from '@/store/meetingStore'
 
 // Create router with React Router v7 data router pattern
 const router = createBrowserRouter([
@@ -35,6 +37,13 @@ const router = createBrowserRouter([
 ])
 
 function App() {
+  const initializeMeetings = useMeetingStore(state => state.initializeMeetings)
+  
+  useEffect(() => {
+    // Initialize meetings from localStorage on app start
+    initializeMeetings()
+  }, [initializeMeetings])
+
   return (
     <ErrorBoundary>
       <ThemeProvider>

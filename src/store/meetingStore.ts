@@ -9,7 +9,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { v4 as uuidv4 } from 'uuid'
 import { Meeting, AgendaItem, NoteBlock, Task, TranscriptChunk } from '@/types'
-import { STORAGE_KEYS, saveMeeting, loadMeeting, deleteMeeting } from '@/utils/storage'
+import { STORAGE_KEYS, saveMeeting, loadMeeting, deleteMeeting, loadFromStorage } from '@/utils/storage'
 
 interface MeetingState {
   // Current meeting data
@@ -58,6 +58,9 @@ interface MeetingState {
   startMeeting: () => boolean
   endMeeting: () => boolean
   saveMeetingToStorage: () => boolean
+  
+  // Initialization
+  initializeMeetings: () => void
 }
 
 export const useMeetingStore = create<MeetingState>()(
@@ -488,6 +491,22 @@ export const useMeetingStore = create<MeetingState>()(
         if (!currentMeeting) return false
         
         return saveMeeting(currentMeeting)
+      },
+      
+      // Initialization
+      initializeMeetings: () => {
+        // Load meetings list from localStorage
+        const storedMeetings = loadFromStorage<Meeting[]>(STORAGE_KEYS.MEETINGS, [])
+        
+        // Convert to meeting summary format
+        const meetingSummaries = storedMeetings.map(meeting => ({
+          id: meeting.id,
+          title: meeting.title,
+          startTime: meeting.startTime,
+          lastModified: meeting.endTime || meeting.startTime
+        }))
+        
+        set({ meetings: meetingSummaries })
       }
     }),
     {
