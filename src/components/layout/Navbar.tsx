@@ -1,13 +1,36 @@
 import { Link, useLocation } from 'react-router-dom'
 import { useTheme } from './ThemeProvider'
 import { Button } from '../ui/button'
-import { MoonIcon, SunIcon, SettingsIcon, HomeIcon, PlusIcon, MenuIcon } from 'lucide-react'
-import { useState } from 'react'
+import { 
+  MoonIcon, 
+  SunIcon, 
+  SettingsIcon, 
+  HomeIcon, 
+  PlusIcon, 
+  MenuIcon, 
+  FileTextIcon, 
+  CheckSquareIcon, 
+  MicIcon, 
+  DownloadIcon 
+} from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { cn } from '@/lib/utils'
 
 export function Navbar() {
   const { theme, setTheme } = useTheme()
   const location = useLocation()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [scrolled, setScrolled] = useState(false)
+  
+  // Handle scroll effect for navbar
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 10)
+    }
+    
+    window.addEventListener('scroll', handleScroll)
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
   
   const toggleTheme = () => {
     if (theme === 'light') {
@@ -20,7 +43,10 @@ export function Navbar() {
   }
 
   const isActive = (path: string) => {
-    return location.pathname === path
+    if (path === '/') {
+      return location.pathname === path
+    }
+    return location.pathname.startsWith(path)
   }
 
   const closeMobileMenu = () => {
@@ -28,15 +54,24 @@ export function Navbar() {
   }
 
   return (
-    <header className="border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60 sticky top-0 z-50">
+    <header 
+      className={cn(
+        "border-b border-border sticky top-0 z-50 transition-all duration-200",
+        scrolled 
+          ? "bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 shadow-sm" 
+          : "bg-background"
+      )}
+    >
       <div className="container mx-auto px-4 py-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-6">
-            <Link to="/" className="flex items-center gap-2" onClick={closeMobileMenu}>
-              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                <span className="text-primary-foreground font-bold text-sm">MF</span>
+            <Link to="/" className="flex items-center gap-2 group" onClick={closeMobileMenu}>
+              <div className="w-9 h-9 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center transition-transform group-hover:scale-105">
+                <span className="text-white font-bold text-sm">MF</span>
               </div>
-              <span className="font-bold text-xl text-foreground hidden sm:inline">MeetingFlow</span>
+              <span className="font-bold text-xl bg-gradient-to-r from-indigo-500 to-purple-600 bg-clip-text text-transparent hidden sm:inline">
+                MeetingFlow
+              </span>
             </Link>
             
             {/* Desktop Navigation */}
@@ -45,7 +80,7 @@ export function Navbar() {
                 <Button 
                   variant={isActive('/') ? 'secondary' : 'ghost'} 
                   size="sm"
-                  className="gap-2"
+                  className="gap-2 font-medium"
                 >
                   <HomeIcon className="h-4 w-4" />
                   Dashboard
@@ -55,21 +90,66 @@ export function Navbar() {
                 <Button 
                   variant={isActive('/meeting/new') ? 'secondary' : 'ghost'} 
                   size="sm"
-                  className="gap-2"
+                  className="gap-2 font-medium"
                 >
                   <PlusIcon className="h-4 w-4" />
                   New Meeting
+                </Button>
+              </Link>
+              <Link to="/agenda">
+                <Button 
+                  variant={isActive('/agenda') ? 'secondary' : 'ghost'} 
+                  size="sm"
+                  className="gap-2 font-medium"
+                >
+                  <FileTextIcon className="h-4 w-4" />
+                  Agenda
+                </Button>
+              </Link>
+              <Link to="/tasks">
+                <Button 
+                  variant={isActive('/tasks') ? 'secondary' : 'ghost'} 
+                  size="sm"
+                  className="gap-2 font-medium"
+                >
+                  <CheckSquareIcon className="h-4 w-4" />
+                  Tasks
                 </Button>
               </Link>
             </nav>
           </div>
           
           <div className="flex items-center gap-2">
+            {/* Quick Actions - Desktop */}
+            <div className="hidden md:flex items-center">
+              <Link to="/meeting/new?transcribe=true">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  className="gap-2 mr-2 text-sm font-medium border-dashed"
+                >
+                  <MicIcon className="h-3.5 w-3.5 text-green-500" />
+                  Transcribe
+                </Button>
+              </Link>
+              <Link to="/export">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  className="gap-2 mr-2 text-sm font-medium border-dashed"
+                >
+                  <DownloadIcon className="h-3.5 w-3.5 text-blue-500" />
+                  Export
+                </Button>
+              </Link>
+            </div>
+            
             {/* Theme Toggle */}
             <Button
               variant="ghost"
               size="icon"
               onClick={toggleTheme}
+              className="rounded-full"
               aria-label={
                 theme === 'dark' 
                   ? 'Switch to system mode' 
@@ -92,6 +172,7 @@ export function Navbar() {
               <Button 
                 variant={isActive('/settings') ? 'secondary' : 'ghost'} 
                 size="icon" 
+                className="rounded-full"
                 aria-label="Settings"
                 onClick={closeMobileMenu}
               >
@@ -103,7 +184,7 @@ export function Navbar() {
             <Button
               variant="ghost"
               size="icon"
-              className="lg:hidden"
+              className="lg:hidden rounded-full"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               aria-label="Toggle menu"
             >
@@ -114,7 +195,7 @@ export function Navbar() {
 
         {/* Mobile Navigation Menu */}
         {isMobileMenuOpen && (
-          <div className="lg:hidden mt-4 pb-4 border-t border-border pt-4">
+          <div className="lg:hidden mt-4 pb-4 border-t border-border pt-4 animate-in slide-in-from-top duration-300">
             <nav className="flex flex-col gap-2">
               <Link to="/" onClick={closeMobileMenu}>
                 <Button 
@@ -134,6 +215,46 @@ export function Navbar() {
                 >
                   <PlusIcon className="h-4 w-4" />
                   New Meeting
+                </Button>
+              </Link>
+              <Link to="/agenda" onClick={closeMobileMenu}>
+                <Button 
+                  variant={isActive('/agenda') ? 'secondary' : 'ghost'} 
+                  size="sm"
+                  className="w-full justify-start gap-2"
+                >
+                  <FileTextIcon className="h-4 w-4" />
+                  Agenda
+                </Button>
+              </Link>
+              <Link to="/tasks" onClick={closeMobileMenu}>
+                <Button 
+                  variant={isActive('/tasks') ? 'secondary' : 'ghost'} 
+                  size="sm"
+                  className="w-full justify-start gap-2"
+                >
+                  <CheckSquareIcon className="h-4 w-4" />
+                  Tasks
+                </Button>
+              </Link>
+              <Link to="/meeting/new?transcribe=true" onClick={closeMobileMenu}>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  className="w-full justify-start gap-2 mt-2 border-dashed"
+                >
+                  <MicIcon className="h-4 w-4 text-green-500" />
+                  Start Transcription
+                </Button>
+              </Link>
+              <Link to="/export" onClick={closeMobileMenu}>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  className="w-full justify-start gap-2 border-dashed"
+                >
+                  <DownloadIcon className="h-4 w-4 text-blue-500" />
+                  Export Data
                 </Button>
               </Link>
             </nav>

@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useMeetingStore } from '@/store/meetingStore'
@@ -15,7 +15,9 @@ import {
   SearchIcon,
   FileTextIcon,
   CheckSquareIcon,
-  MicIcon
+  MicIcon,
+  ArrowRightIcon,
+  AlertCircleIcon
 } from 'lucide-react'
 
 interface MeetingListProps {
@@ -28,6 +30,18 @@ export function MeetingList({ limit, showSearch = true, showActions = true }: Me
   const { meetings, deleteMeeting, loadMeeting } = useMeetingStore()
   const [searchTerm, setSearchTerm] = useState('')
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [animateItems, setAnimateItems] = useState(false)
+
+  // Simulate loading state and add animation
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoading(false)
+      setTimeout(() => setAnimateItems(true), 100)
+    }, 500)
+    
+    return () => clearTimeout(timer)
+  }, [])
 
   // Filter meetings based on search term
   const filteredMeetings = meetings.filter(meeting => 
@@ -88,19 +102,62 @@ export function MeetingList({ limit, showSearch = true, showActions = true }: Me
     return {
       notes: fullMeeting.notes.length,
       tasks: fullMeeting.tasks.length,
-      transcripts: fullMeeting.transcripts.length
+      transcripts: fullMeeting.transcripts.length,
+      pendingTasks: fullMeeting.tasks.filter(task => task.status !== 'Done').length
     }
+  }
+
+  // Loading skeleton
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        {showSearch && (
+          <div className="relative animate-pulse">
+            <div className="h-10 bg-muted rounded-md w-full"></div>
+          </div>
+        )}
+        
+        <div className="space-y-3">
+          {[1, 2, 3].slice(0, limit || 3).map((_, index) => (
+            <Card key={index} className="animate-pulse">
+              <CardHeader className="pb-3">
+                <div className="h-6 bg-muted rounded-md w-3/4 mb-2"></div>
+                <div className="h-4 bg-muted rounded-md w-1/2"></div>
+              </CardHeader>
+              <CardContent>
+                <div className="h-4 bg-muted rounded-md w-full mb-3"></div>
+                <div className="flex gap-2 mb-3">
+                  <div className="h-4 bg-muted rounded-md w-1/4"></div>
+                  <div className="h-4 bg-muted rounded-md w-1/4"></div>
+                  <div className="h-4 bg-muted rounded-md w-1/4"></div>
+                </div>
+                <div className="flex gap-2">
+                  <div className="h-6 bg-muted rounded-full w-16"></div>
+                  <div className="h-6 bg-muted rounded-full w-16"></div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    )
   }
 
   if (displayedMeetings.length === 0) {
     return (
-      <Card>
+      <Card className="border-2 border-dashed border-muted-foreground/25">
         <CardContent className="flex flex-col items-center justify-center py-12">
-          <CalendarIcon className="h-12 w-12 text-muted-foreground mb-4" />
-          <h3 className="text-lg font-semibold mb-2">
+          <div className="h-16 w-16 bg-muted rounded-full flex items-center justify-center mb-4">
+            {searchTerm ? (
+              <SearchIcon className="h-8 w-8 text-muted-foreground" />
+            ) : (
+              <CalendarIcon className="h-8 w-8 text-muted-foreground" />
+            )}
+          </div>
+          <h3 className="text-xl font-semibold mb-2">
             {searchTerm ? 'No meetings found' : 'No meetings yet'}
           </h3>
-          <p className="text-muted-foreground text-center mb-4">
+          <p className="text-muted-foreground text-center mb-6 max-w-md">
             {searchTerm 
               ? `No meetings match "${searchTerm}". Try a different search term.`
               : 'Create your first meeting to get started with agenda planning and note-taking.'
@@ -108,7 +165,10 @@ export function MeetingList({ limit, showSearch = true, showActions = true }: Me
           </p>
           {!searchTerm && (
             <Link to="/meeting/new">
-              <Button>Create Your First Meeting</Button>
+              <Button className="gap-2 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700">
+                <PlusIcon className="h-4 w-4" />
+                Create Your First Meeting
+              </Button>
             </Link>
           )}
         </CardContent>
@@ -127,27 +187,36 @@ export function MeetingList({ limit, showSearch = true, showActions = true }: Me
             placeholder="Search meetings..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
+            className="pl-10 bg-background border-border/50 focus:border-primary/50 focus:ring-2 focus:ring-primary/20"
           />
         </div>
       )}
 
       {/* Meeting List */}
       <div className="space-y-3">
-        {displayedMeetings.map((meeting) => {
+        {displayedMeetings.map((meeting, index) => {
           const stats = getMeetingStats(meeting.id)
           const fullMeeting = loadMeeting(meeting.id)
           
           return (
-            <Card key={meeting.id} className="hover:shadow-md transition-shadow">
+            <Card 
+              key={meeting.id} 
+              className={`hover:shadow-md transition-all duration-300 border-border/50 ${
+                animateItems 
+                  ? 'animate-in fade-in slide-in-from-bottom-3' 
+                  : 'opacity-0'
+              }`}
+              style={{ animationDelay: `${index * 75}ms` }}
+            >
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
                   <div className="flex-1 min-w-0">
                     <CardTitle className="text-lg truncate">
                       <Link 
                         to={`/meeting/${meeting.id}`}
-                        className="hover:text-primary transition-colors"
+                        className="hover:text-primary transition-colors flex items-center gap-2"
                       >
+                        <span className="w-2 h-2 rounded-full bg-primary"></span>
                         {meeting.title}
                       </Link>
                     </CardTitle>
@@ -166,7 +235,12 @@ export function MeetingList({ limit, showSearch = true, showActions = true }: Me
                   {showActions && (
                     <div className="flex items-center gap-2 ml-4">
                       <Link to={`/meeting/${meeting.id}`}>
-                        <Button variant="ghost" size="sm">
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="rounded-full h-8 w-8 p-0"
+                          aria-label="Edit meeting"
+                        >
                           <EditIcon className="h-4 w-4" />
                         </Button>
                       </Link>
@@ -174,7 +248,8 @@ export function MeetingList({ limit, showSearch = true, showActions = true }: Me
                         variant="ghost"
                         size="sm"
                         onClick={() => handleDelete(meeting.id)}
-                        className={deleteConfirm === meeting.id ? 'text-red-600 hover:text-red-700' : ''}
+                        className={`rounded-full h-8 w-8 p-0 ${deleteConfirm === meeting.id ? 'text-red-600 hover:text-red-700 hover:bg-red-50' : ''}`}
+                        aria-label="Delete meeting"
                       >
                         <TrashIcon className="h-4 w-4" />
                       </Button>
@@ -192,7 +267,7 @@ export function MeetingList({ limit, showSearch = true, showActions = true }: Me
                 )}
                 
                 {/* Meeting Stats */}
-                <div className="flex items-center gap-4 text-sm text-muted-foreground mb-3">
+                <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground mb-3">
                   <span className="flex items-center gap-1">
                     <FileTextIcon className="h-3 w-3" />
                     {stats.notes} notes
@@ -200,6 +275,11 @@ export function MeetingList({ limit, showSearch = true, showActions = true }: Me
                   <span className="flex items-center gap-1">
                     <CheckSquareIcon className="h-3 w-3" />
                     {stats.tasks} tasks
+                    {stats.pendingTasks > 0 && (
+                      <span className="inline-flex items-center justify-center h-4 w-4 rounded-full bg-amber-500 text-white text-xs font-medium">
+                        {stats.pendingTasks}
+                      </span>
+                    )}
                   </span>
                   <span className="flex items-center gap-1">
                     <MicIcon className="h-3 w-3" />
@@ -248,16 +328,21 @@ export function MeetingList({ limit, showSearch = true, showActions = true }: Me
                 
                 {/* Delete Confirmation */}
                 {deleteConfirm === meeting.id && (
-                  <div className="mt-3 p-2 bg-red-50 border border-red-200 rounded-md">
-                    <p className="text-sm text-red-600 mb-2">
-                      Are you sure you want to delete this meeting? This action cannot be undone.
-                    </p>
+                  <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-md animate-in fade-in slide-in-from-top-2 duration-200">
+                    <div className="flex items-start gap-2 mb-2">
+                      <AlertCircleIcon className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" />
+                      <p className="text-sm text-red-600">
+                        Are you sure you want to delete this meeting? This action cannot be undone.
+                      </p>
+                    </div>
                     <div className="flex gap-2">
                       <Button
                         size="sm"
                         variant="destructive"
                         onClick={() => handleDelete(meeting.id)}
+                        className="gap-1"
                       >
+                        <TrashIcon className="h-3 w-3" />
                         Delete
                       </Button>
                       <Button
@@ -270,6 +355,36 @@ export function MeetingList({ limit, showSearch = true, showActions = true }: Me
                     </div>
                   </div>
                 )}
+                
+                {/* Quick Actions */}
+                {!deleteConfirm && (
+                  <div className="mt-3 pt-3 border-t border-border/50 flex justify-between items-center">
+                    <div className="flex gap-2">
+                      <Link to={`/meeting/${meeting.id}/agenda`}>
+                        <Button variant="ghost" size="sm" className="h-8 text-xs">
+                          <FileTextIcon className="h-3 w-3 mr-1" />
+                          Agenda
+                        </Button>
+                      </Link>
+                      <Link to={`/meeting/${meeting.id}/tasks`}>
+                        <Button variant="ghost" size="sm" className="h-8 text-xs">
+                          <CheckSquareIcon className="h-3 w-3 mr-1" />
+                          Tasks
+                        </Button>
+                      </Link>
+                    </div>
+                    <Link to={`/meeting/${meeting.id}`}>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="h-8 text-xs gap-1 border-dashed"
+                      >
+                        Open
+                        <ArrowRightIcon className="h-3 w-3" />
+                      </Button>
+                    </Link>
+                  </div>
+                )}
               </CardContent>
             </Card>
           )
@@ -280,8 +395,12 @@ export function MeetingList({ limit, showSearch = true, showActions = true }: Me
       {limit && filteredMeetings.length > limit && (
         <div className="text-center pt-4">
           <Link to="/meetings">
-            <Button variant="outline">
+            <Button 
+              variant="outline" 
+              className="gap-2 border-dashed"
+            >
               View All {filteredMeetings.length} Meetings
+              <ArrowRightIcon className="h-4 w-4" />
             </Button>
           </Link>
         </div>
