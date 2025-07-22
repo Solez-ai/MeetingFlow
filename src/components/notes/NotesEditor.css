@@ -1,0 +1,150 @@
+.tiptap {
+  min-height: 300px;
+  padding: 1rem;
+  outline: none;
+  overflow-y: auto;
+}
+
+.tiptap p {
+  margin-bottom: 0.75rem;
+}
+
+.tiptap h1 {
+  font-size: 1.875rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  margin-top: 1.5rem;
+}
+
+.tiptap h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+  margin-top: 1.25rem;
+}
+
+.tiptap h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  margin-top: 1rem;
+}
+
+.tiptap ul {
+  list-style-type: disc;
+  padding-left: 1.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.tiptap ol {
+  list-style-type: decimal;
+  padding-left: 1.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.tiptap code {
+  background-color: rgba(0, 0, 0, 0.1);
+  padding: 0.2rem 0.4rem;
+  border-radius: 0.25rem;
+  font-family: monospace;
+}
+
+.tiptap pre {
+  background-color: rgba(0, 0, 0, 0.1);
+  padding: 0.75rem;
+  border-radius: 0.25rem;
+  margin-bottom: 0.75rem;
+  font-family: monospace;
+  overflow-x: auto;
+}
+
+.tiptap blockquote {
+  border-left: 4px solid rgba(0, 0, 0, 0.2);
+  padding-left: 1rem;
+  font-style: italic;
+  margin-left: 0;
+  margin-right: 0;
+  margin-bottom: 0.75rem;
+}
+
+.tiptap mark {
+  background-color: rgba(255, 255, 0, 0.4);
+  padding: 0.1rem 0;
+}
+
+.tiptap ul[data-type="taskList"] {
+  list-style-type: none;
+  padding: 0;
+}
+
+.tiptap ul[data-type="taskList"] li {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 0.5rem;
+}
+
+.tiptap ul[data-type="taskList"] li > label {
+  margin-right: 0.5rem;
+  user-select: none;
+}
+
+.tiptap ul[data-type="taskList"] li > div {
+  flex: 1;
+}
+
+.editor-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+  padding: 0.5rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.editor-toolbar button {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+  border-radius: 0.25rem;
+  background-color: transparent;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+}
+
+.editor-toolbar button.is-active {
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+.editor-content {
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 0.25rem;
+}
+
+.editor-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  margin-top: 0.75rem;
+}
+
+.editor-footer .save-status {
+  font-size: 0.875rem;
+  color: rgba(0, 0, 0, 0.6);
+}
+
+.selected-text-panel {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 0.25rem;
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.selected-text-panel p {
+  margin-bottom: 0.5rem;
+}
+
+.selected-text-panel button {
+  margin-top: 0.5rem;
+}

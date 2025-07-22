@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
 import { AgendaManager } from '../agenda/AgendaManager'
 import { AgendaSidebar } from '../agenda/AgendaSidebar'
+import { NotesContainer } from '../notes/NotesContainer'
 import { useMeetingStore } from '@/store/meetingStore'
 
 export function MeetingWorkspace() {
@@ -53,14 +54,9 @@ export function MeetingWorkspace() {
           </div>
           
           {/* Notes Panel */}
-          <Card className="lg:col-span-1 h-full">
-            <CardHeader>
-              <CardTitle>Notes</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">Rich text editor coming soon...</p>
-            </CardContent>
-          </Card>
+          <div className="lg:col-span-1 h-full">
+            <NotesContainer />
+          </div>
           
           {/* Tasks Panel */}
           <Card className="lg:col-span-1 h-full">
