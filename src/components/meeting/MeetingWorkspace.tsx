@@ -1,9 +1,9 @@
 import { useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
 import { AgendaManager } from '../agenda/AgendaManager'
 import { AgendaSidebar } from '../agenda/AgendaSidebar'
 import { NotesContainer } from '../notes/NotesContainer'
+import { TaskManager } from '../tasks/TaskManager'
 import { useMeetingStore } from '@/store/meetingStore'
 
 export function MeetingWorkspace() {
@@ -59,14 +59,9 @@ export function MeetingWorkspace() {
           </div>
           
           {/* Tasks Panel */}
-          <Card className="lg:col-span-1 h-full">
-            <CardHeader>
-              <CardTitle>Tasks</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">Task management coming soon...</p>
-            </CardContent>
-          </Card>
+          <div className="lg:col-span-1 h-full overflow-hidden">
+            <TaskManager />
+          </div>
         </div>
       </div>
     </div>

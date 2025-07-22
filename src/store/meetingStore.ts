@@ -47,6 +47,7 @@ interface MeetingState {
   updateTask: (id: string, updates: Partial<Omit<Task, 'id'>>) => boolean
   removeTask: (id: string) => boolean
   toggleTaskStatus: (id: string) => boolean
+  extractTaskFromText: (text: string, source: 'notes' | 'transcript') => string
   
   // Transcript actions
   addTranscriptChunk: (chunk: Omit<TranscriptChunk, 'id'>) => string
@@ -375,6 +376,27 @@ export const useMeetingStore = create<MeetingState>()(
         return get().updateTask(id, { status: nextStatus })
       },
       
+      extractTaskFromText: (text: string, source: 'notes' | 'transcript') => {
+        // Import dynamically to avoid circular dependencies
+        return import('@/utils/taskExtractor').then(({ isLikelyActionItem }) => {
+          // Check if the text is likely an action item
+          if (!isLikelyActionItem(text)) {
+            return ''
+          }
+          
+          // Create a new task from the text
+          const taskId = get().addTask({
+            title: text,
+            priority: 'Medium',
+            status: 'Todo',
+            tags: [source],
+            createdFrom: source
+          })
+          
+          return taskId
+        })
+      },
+      
       // Transcript operations
       addTranscriptChunk: (chunk: Omit<TranscriptChunk, 'id'>) => {
         const { currentMeeting } = get()
@@ -430,11 +452,41 @@ export const useMeetingStore = create<MeetingState>()(
         if (!currentMeeting) return []
         
         const chunk = currentMeeting.transcripts.find(c => c.id === chunkId)
-        if (!chunk || !chunk.actionItems) return []
+        if (!chunk) return []
+        
+        // Use existing action items if available, otherwise extract from text
+        const actionItems = chunk.actionItems || []
+        
+        // If no action items are available, try to extract them from the text
+        if (actionItems.length === 0 && chunk.text) {
+          // Import dynamically to avoid circular dependencies
+          import('@/utils/taskExtractor').then(({ extractTasksFromTranscript }) => {
+            const extractedItems = extractTasksFromTranscript(chunk.text)
+            
+            // Update the transcript chunk with extracted action items
+            if (extractedItems.length > 0) {
+              get().updateTranscriptChunk(chunk.id, { 
+                actionItems: extractedItems 
+              })
+              
+              // Create tasks from extracted items
+              extractedItems.forEach(item => {
+                get().addTask({
+                  title: item,
+                  priority: 'Medium',
+                  status: 'Todo',
+                  tags: ['transcript', 'auto-extracted'],
+                  createdFrom: 'transcript'
+                })
+              })
+            }
+          })
+        }
         
         const taskIds: string[] = []
         
-        chunk.actionItems.forEach(actionItem => {
+        // Create tasks from existing action items
+        actionItems.forEach(actionItem => {
           const taskId = get().addTask({
             title: actionItem,
             priority: 'Medium',
