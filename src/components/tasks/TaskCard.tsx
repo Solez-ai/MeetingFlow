@@ -1,11 +1,16 @@
 import { Card, CardContent } from '../ui/card'
 import { Button } from '../ui/button'
-import { Edit, Trash2, Calendar, Tag } from 'lucide-react'
+import { Edit, Trash2, Calendar, Tag, User, Clock } from 'lucide-react'
 import { Task } from '@/types'
+import { cn } from '@/lib/utils'
+import { format } from 'date-fns'
+import { Badge } from '../ui/badge'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip'
+
 
 interface TaskCardProps {
   task: Task
-  onDragStart: (e: React.DragEvent) => void
+  onDragStart: (e: React.DragEvent<HTMLDivElement>) => void
   onEdit: () => void
   onDelete: () => void
 }
@@ -13,31 +18,45 @@ interface TaskCardProps {
 export function TaskCard({ task, onDragStart, onEdit, onDelete }: TaskCardProps) {
   // Format due date if present
   const formattedDueDate = task.dueDate 
-    ? new Date(task.dueDate).toLocaleDateString('en-US', { 
-        month: 'short', 
-        day: 'numeric' 
-      })
+    ? format(new Date(task.dueDate), 'MMM d')
     : null
   
-  // Determine priority color
-  const priorityColor = {
-    'High': 'bg-red-500',
-    'Medium': 'bg-yellow-500',
-    'Low': 'bg-blue-500'
+  // Check if task is overdue
+  const isOverdue = task.dueDate && new Date(task.dueDate) < new Date() && task.status !== 'Done'
+  
+  // Format created date
+  const createdDate = format(new Date(task.created), 'MMM d')
+  
+  // Determine priority color and label
+  const priorityConfig = {
+    'High': { color: 'bg-red-500', textColor: 'text-red-700', bgColor: 'bg-red-50', label: 'High' },
+    'Medium': { color: 'bg-yellow-500', textColor: 'text-yellow-700', bgColor: 'bg-yellow-50', label: 'Medium' },
+    'Low': { color: 'bg-blue-500', textColor: 'text-blue-700', bgColor: 'bg-blue-50', label: 'Low' }
   }[task.priority]
   
   return (
     <Card 
-      className="cursor-grab active:cursor-grabbing hover:shadow-md transition-shadow"
+      className={cn(
+        "cursor-grab active:cursor-grabbing transition-all duration-200",
+        "hover:shadow-md border-l-4",
+        task.status === 'Done' ? "border-l-green-500" : 
+        task.status === 'In Progress' ? "border-l-blue-500" : 
+        isOverdue ? "border-l-red-500" : "border-l-slate-200"
+      )}
       draggable
       onDragStart={onDragStart}
     >
       <CardContent className="p-3">
-        <div className="flex items-start justify-between">
-          <div className="flex-1">
-            <div className="flex items-center gap-2 mb-1">
-              <div className={`w-2 h-2 rounded-full ${priorityColor}`} />
-              <h3 className="font-medium text-sm line-clamp-2">{task.title}</h3>
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-1.5">
+              <div className={cn("w-2 h-2 rounded-full", priorityConfig.color)} />
+              <h3 className={cn(
+                "font-medium text-sm line-clamp-2",
+                task.status === 'Done' && "line-through text-muted-foreground"
+              )}>
+                {task.title}
+              </h3>
             </div>
             
             {task.description && (
@@ -48,44 +67,61 @@ export function TaskCard({ task, onDragStart, onEdit, onDelete }: TaskCardProps)
             
             <div className="flex flex-wrap items-center gap-2 mt-2">
               {formattedDueDate && (
-                <div className="flex items-center text-xs text-muted-foreground">
+                <div className={cn(
+                  "flex items-center text-xs rounded-full px-2 py-0.5",
+                  isOverdue ? "bg-red-100 text-red-700" : "bg-muted text-muted-foreground"
+                )}>
                   <Calendar className="h-3 w-3 mr-1" />
                   <span>{formattedDueDate}</span>
                 </div>
               )}
               
-              {task.tags.length > 0 && (
-                <div className="flex items-center gap-1">
-                  <Tag className="h-3 w-3 text-muted-foreground" />
-                  {task.tags.slice(0, 2).map(tag => (
-                    <span 
-                      key={tag} 
-                      className="bg-muted px-1.5 py-0.5 rounded text-xs"
-                    >
-                      {tag}
-                    </span>
-                  ))}
-                  {task.tags.length > 2 && (
-                    <span className="text-xs text-muted-foreground">
-                      +{task.tags.length - 2}
-                    </span>
-                  )}
+              {task.assignee && (
+                <div className="flex items-center text-xs bg-muted text-muted-foreground rounded-full px-2 py-0.5">
+                  <User className="h-3 w-3 mr-1" />
+                  <span className="truncate max-w-[80px]">{task.assignee}</span>
                 </div>
               )}
               
-              {task.createdFrom && task.createdFrom !== 'manual' && (
-                <span className="text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded">
-                  {task.createdFrom === 'transcript' ? 'From transcript' : 'From notes'}
-                </span>
-              )}
+              <div className="flex items-center text-xs bg-muted text-muted-foreground rounded-full px-2 py-0.5">
+                <Clock className="h-3 w-3 mr-1" />
+                <span>{createdDate}</span>
+              </div>
             </div>
+            
+            {task.tags.length > 0 && (
+              <div className="flex flex-wrap gap-1 mt-2">
+                {task.tags.slice(0, 3).map(tag => (
+                  <Badge 
+                    key={tag} 
+                    variant="outline"
+                    className="text-xs py-0 px-1.5 h-5"
+                  >
+                    {tag}
+                  </Badge>
+                ))}
+                {task.tags.length > 3 && (
+                  <Badge variant="outline" className="text-xs py-0 px-1.5 h-5">
+                    +{task.tags.length - 3}
+                  </Badge>
+                )}
+              </div>
+            )}
+            
+            {task.createdFrom && task.createdFrom !== 'manual' && (
+              <div className="mt-2">
+                <Badge variant="secondary" className="text-xs">
+                  {task.createdFrom === 'transcript' ? 'From transcript' : 'From notes'}
+                </Badge>
+              </div>
+            )}
           </div>
           
-          <div className="flex gap-1 ml-2">
+          <div className="flex gap-1 ml-1">
             <Button 
               variant="ghost" 
               size="icon" 
-              className="h-6 w-6" 
+              className="h-6 w-6 rounded-full opacity-50 hover:opacity-100" 
               onClick={(e) => {
                 e.stopPropagation()
                 onEdit()
@@ -97,7 +133,7 @@ export function TaskCard({ task, onDragStart, onEdit, onDelete }: TaskCardProps)
             <Button 
               variant="ghost" 
               size="icon" 
-              className="h-6 w-6 text-destructive hover:text-destructive" 
+              className="h-6 w-6 rounded-full text-destructive opacity-50 hover:opacity-100 hover:text-destructive" 
               onClick={(e) => {
                 e.stopPropagation()
                 onDelete()

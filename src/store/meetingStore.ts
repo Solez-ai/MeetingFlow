@@ -1,572 +1,363 @@
-/**
- * Meeting store using Zustand
- * 
- * This store manages the current meeting state, including agenda,
- * notes, tasks, and transcripts.
- */
-
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
 import { v4 as uuidv4 } from 'uuid'
-import { Meeting, AgendaItem, NoteBlock, Task, TranscriptChunk } from '@/types'
-import { STORAGE_KEYS, saveMeeting, loadMeeting, deleteMeeting, loadFromStorage } from '@/utils/storage'
+import { Meeting, Task, TranscriptChunk, TranscriptionStatus } from '@/types'
+import { initializeAssemblyAI } from '@/services/transcriptionService'
 
-interface MeetingState {
-  // Current meeting data
+export interface MeetingState {
+  meetings: Meeting[]
+  currentMeetingId: string | null
   currentMeeting: Meeting | null
   
-  // Meeting list
-  meetings: {
-    id: string
-    title: string
-    startTime: string
-    lastModified: string
-  }[]
+  // AssemblyAI configuration
+  assemblyApiKey: string | null
+  isTranscribing: boolean
+  transcriptionStatus: TranscriptionStatus | null
   
-  // Actions
-  createMeeting: (title: string, duration?: number) => Meeting
-  loadMeeting: (id: string) => Meeting | null
-  updateMeeting: (meeting: Partial<Meeting>) => boolean
-  deleteMeeting: (id: string) => boolean
-  
-  // Agenda actions
-  addAgendaItem: (item: Omit<AgendaItem, 'id' | 'order'>) => string
-  updateAgendaItem: (id: string, updates: Partial<Omit<AgendaItem, 'id'>>) => boolean
-  removeAgendaItem: (id: string) => boolean
-  reorderAgendaItems: (itemIds: string[]) => boolean
-  generateTimeBalancedAgenda: (totalDuration: number) => boolean
-  
-  // Notes actions
-  addNoteBlock: (block: Omit<NoteBlock, 'id' | 'timestamp'>) => string
-  updateNoteBlock: (id: string, updates: Partial<Omit<NoteBlock, 'id'>>) => boolean
-  removeNoteBlock: (id: string) => boolean
-  linkNoteToAgenda: (noteId: string, agendaItemId: string) => boolean
+  // Meeting actions
+  initializeMeetings: () => void
+  setCurrentMeeting: (meetingId: string) => void
+  createMeeting: (title: string) => Meeting
+  loadMeeting: (id: string) => Meeting | undefined
+  addMeeting: (meeting: Omit<Meeting, 'id' | 'tasks'>) => void
+  updateMeeting: (id: string, updates: Partial<Omit<Meeting, 'id'>>) => void
+  removeMeeting: (id: string) => void
   
   // Task actions
   addTask: (task: Omit<Task, 'id' | 'created'>) => string
-  updateTask: (id: string, updates: Partial<Omit<Task, 'id'>>) => boolean
-  removeTask: (id: string) => boolean
-  toggleTaskStatus: (id: string) => boolean
-  extractTaskFromText: (text: string, source: 'notes' | 'transcript') => string
+  updateTask: (id: string, updates: Partial<Omit<Task, 'id'>>) => void
+  removeTask: (id: string) => void
+  toggleTaskStatus: (id: string) => void
   
-  // Transcript actions
-  addTranscriptChunk: (chunk: Omit<TranscriptChunk, 'id'>) => string
-  updateTranscriptChunk: (id: string, updates: Partial<Omit<TranscriptChunk, 'id'>>) => boolean
-  removeTranscriptChunk: (id: string) => boolean
-  extractTasksFromTranscript: (chunkId: string) => string[]
-  
-  // Meeting lifecycle
-  startMeeting: () => boolean
-  endMeeting: () => boolean
-  saveMeetingToStorage: () => boolean
-  
-  // Initialization
-  initializeMeetings: () => void
+  // Transcription actions
+  setAssemblyApiKey: (apiKey: string) => void
+  startTranscription: () => void
+  stopTranscription: () => void
+  setTranscriptionStatus: (status: TranscriptionStatus) => void
+  addTranscriptChunk: (chunk: Omit<TranscriptChunk, 'id'>) => void
 }
 
-export const useMeetingStore = create<MeetingState>()(
-  persist(
-    (set, get) => ({
-      // Initial state
-      currentMeeting: null,
-      meetings: [],
+// Load meetings from localStorage
+const loadMeetingsFromStorage = (): Meeting[] => {
+  try {
+    const storedMeetings = localStorage.getItem('meetings')
+    if (storedMeetings) {
+      return JSON.parse(storedMeetings)
+    }
+  } catch (error) {
+    console.error('Error loading meetings from localStorage:', error)
+  }
+  return []
+}
+
+// Save meetings to localStorage
+const saveMeetingsToStorage = (meetings: Meeting[]) => {
+  try {
+    localStorage.setItem('meetings', JSON.stringify(meetings))
+  } catch (error) {
+    console.error('Error saving meetings to localStorage:', error)
+  }
+}
+
+export const useMeetingStore = create<MeetingState>((set, get) => ({
+  meetings: [],
+  currentMeetingId: null,
+  currentMeeting: null,
+  
+  // AssemblyAI configuration
+  assemblyApiKey: localStorage.getItem('assemblyApiKey') || null,
+  isTranscribing: false,
+  transcriptionStatus: null,
+  
+  // Meeting actions
+  initializeMeetings: () => {
+    const meetings = loadMeetingsFromStorage()
+    set({ meetings })
+  },
+  
+  setCurrentMeeting: (meetingId) => {
+    set({ 
+      currentMeetingId: meetingId,
+      currentMeeting: get().meetings.find(m => m.id === meetingId) || null
+    })
+  },
+  
+  createMeeting: (title) => {
+    const newMeeting: Meeting = {
+      id: uuidv4(),
+      title,
+      startTime: new Date().toISOString(),
+      agenda: [],
+      notes: [],
+      tasks: [],
+      transcripts: [],
+      metadata: {
+        duration: 60,
+        participants: [],
+        tags: []
+      }
+    }
+    
+    set(state => {
+      const updatedMeetings = [...state.meetings, newMeeting]
+      saveMeetingsToStorage(updatedMeetings)
       
-      // Meeting CRUD operations
-      createMeeting: (title: string, duration = 60) => {
-        const meeting: Meeting = {
-          id: uuidv4(),
-          title,
-          startTime: new Date().toISOString(),
-          agenda: [],
-          notes: [],
-          tasks: [],
-          transcripts: [],
-          metadata: {
-            duration,
-            participants: [],
-            tags: []
-          }
-        }
-        
-        set((state) => ({
-          currentMeeting: meeting,
-          meetings: [
-            ...state.meetings,
-            {
-              id: meeting.id,
-              title: meeting.title,
-              startTime: meeting.startTime,
-              lastModified: new Date().toISOString()
-            }
-          ]
-        }))
-        
-        // Save to localStorage
-        saveMeeting(meeting)
-        
-        return meeting
-      },
+      return {
+        meetings: updatedMeetings,
+        currentMeetingId: newMeeting.id,
+        currentMeeting: newMeeting
+      }
+    })
+    
+    return newMeeting
+  },
+  
+  loadMeeting: (id) => {
+    const meeting = get().meetings.find(m => m.id === id)
+    if (meeting) {
+      set({
+        currentMeetingId: id,
+        currentMeeting: meeting
+      })
+    }
+    return meeting
+  },
+  
+  addMeeting: (meeting) => {
+    const newMeeting: Meeting = {
+      ...meeting,
+      id: uuidv4(),
+      tasks: [],
+      transcripts: [],
+      agenda: meeting.agenda || [],
+      notes: meeting.notes || [],
+      metadata: meeting.metadata || {
+        participants: [],
+        tags: []
+      }
+    }
+    
+    set(state => {
+      const updatedMeetings = [...state.meetings, newMeeting]
+      saveMeetingsToStorage(updatedMeetings)
       
-      loadMeeting: (id: string) => {
-        const meeting = loadMeeting(id)
-        if (meeting) {
-          set({ currentMeeting: meeting })
-        }
-        return meeting
-      },
+      return {
+        meetings: updatedMeetings,
+        currentMeetingId: newMeeting.id,
+        currentMeeting: newMeeting
+      }
+    })
+  },
+  
+  updateMeeting: (id, updates) => {
+    set(state => {
+      const updatedMeetings = state.meetings.map(meeting => 
+        meeting.id === id ? { ...meeting, ...updates } : meeting
+      )
       
-      updateMeeting: (updates: Partial<Meeting>) => {
-        const { currentMeeting } = get()
-        if (!currentMeeting) return false
-        
-        const updatedMeeting = { ...currentMeeting, ...updates }
-        
-        set((state) => ({
-          currentMeeting: updatedMeeting,
-          meetings: state.meetings.map(m => 
-            m.id === updatedMeeting.id 
-              ? { ...m, title: updatedMeeting.title, lastModified: new Date().toISOString() }
-              : m
-          )
-        }))
-        
-        return saveMeeting(updatedMeeting)
-      },
+      saveMeetingsToStorage(updatedMeetings)
       
-      deleteMeeting: (id: string) => {
-        const success = deleteMeeting(id)
-        if (success) {
-          set((state) => ({
-            meetings: state.meetings.filter(m => m.id !== id),
-            currentMeeting: state.currentMeeting?.id === id ? null : state.currentMeeting
-          }))
-        }
-        return success
-      },
+      return {
+        meetings: updatedMeetings,
+        currentMeeting: state.currentMeetingId === id 
+          ? updatedMeetings.find(m => m.id === id) || null
+          : state.currentMeeting
+      }
+    })
+  },
+  
+  removeMeeting: (id) => {
+    set(state => {
+      const filteredMeetings = state.meetings.filter(meeting => meeting.id !== id)
+      const needNewCurrent = state.currentMeetingId === id
       
-      // Agenda operations
-      addAgendaItem: (item: Omit<AgendaItem, 'id' | 'order'>) => {
-        const { currentMeeting } = get()
-        if (!currentMeeting) return ''
-        
-        const id = uuidv4()
-        const newItem: AgendaItem = {
-          ...item,
-          id,
-          order: currentMeeting.agenda.length
-        }
-        
-        const updatedMeeting = {
-          ...currentMeeting,
-          agenda: [...currentMeeting.agenda, newItem]
-        }
-        
-        set({ currentMeeting: updatedMeeting })
-        saveMeeting(updatedMeeting)
-        
-        return id
-      },
+      saveMeetingsToStorage(filteredMeetings)
       
-      updateAgendaItem: (id: string, updates: Partial<Omit<AgendaItem, 'id'>>) => {
-        const { currentMeeting } = get()
-        if (!currentMeeting) return false
-        
-        const updatedMeeting = {
-          ...currentMeeting,
-          agenda: currentMeeting.agenda.map(item =>
-            item.id === id ? { ...item, ...updates } : item
-          )
-        }
-        
-        set({ currentMeeting: updatedMeeting })
-        return saveMeeting(updatedMeeting)
-      },
+      return {
+        meetings: filteredMeetings,
+        currentMeetingId: needNewCurrent ? (filteredMeetings[0]?.id || null) : state.currentMeetingId,
+        currentMeeting: needNewCurrent ? (filteredMeetings[0] || null) : state.currentMeeting
+      }
+    })
+  },
+  
+  // Task actions
+  addTask: (task) => {
+    if (!get().currentMeetingId) return ''
+    
+    const newTask: Task = {
+      ...task,
+      id: uuidv4(),
+      created: new Date().toISOString(),
+      tags: task.tags || []
+    }
+    
+    set(state => {
+      if (!state.currentMeeting) return state
       
-      removeAgendaItem: (id: string) => {
-        const { currentMeeting } = get()
-        if (!currentMeeting) return false
-        
-        const updatedMeeting = {
-          ...currentMeeting,
-          agenda: currentMeeting.agenda
-            .filter(item => item.id !== id)
-            .map((item, index) => ({ ...item, order: index }))
-        }
-        
-        set({ currentMeeting: updatedMeeting })
-        return saveMeeting(updatedMeeting)
-      },
+      const updatedMeeting = {
+        ...state.currentMeeting,
+        tasks: [...state.currentMeeting.tasks, newTask]
+      }
       
-      reorderAgendaItems: (itemIds: string[]) => {
-        const { currentMeeting } = get()
-        if (!currentMeeting) return false
-        
-        const reorderedAgenda = itemIds
-          .map(id => currentMeeting.agenda.find(item => item.id === id))
-          .filter((item): item is AgendaItem => item !== undefined)
-          .map((item, index) => ({ ...item, order: index }))
-        
-        const updatedMeeting = {
-          ...currentMeeting,
-          agenda: reorderedAgenda
-        }
-        
-        set({ currentMeeting: updatedMeeting })
-        return saveMeeting(updatedMeeting)
-      },
+      const updatedMeetings = state.meetings.map(meeting => 
+        meeting.id === state.currentMeetingId ? updatedMeeting : meeting
+      )
       
-      generateTimeBalancedAgenda: (totalDuration: number) => {
-        const { currentMeeting } = get()
-        if (!currentMeeting || currentMeeting.agenda.length === 0) return false
-        
-        const itemCount = currentMeeting.agenda.length
-        const timePerItem = Math.floor(totalDuration / itemCount)
-        const remainder = totalDuration % itemCount
-        
-        const updatedAgenda = currentMeeting.agenda.map((item, index) => ({
-          ...item,
-          duration: timePerItem + (index < remainder ? 1 : 0)
-        }))
-        
-        const updatedMeeting = {
-          ...currentMeeting,
-          agenda: updatedAgenda,
-          metadata: {
-            ...currentMeeting.metadata,
-            duration: totalDuration
-          }
-        }
-        
-        set({ currentMeeting: updatedMeeting })
-        return saveMeeting(updatedMeeting)
-      },
+      saveMeetingsToStorage(updatedMeetings)
       
-      // Notes operations
-      addNoteBlock: (block: Omit<NoteBlock, 'id' | 'timestamp'>) => {
-        const { currentMeeting } = get()
-        if (!currentMeeting) return ''
-        
-        const id = uuidv4()
-        const newBlock: NoteBlock = {
-          ...block,
-          id,
-          timestamp: new Date().toISOString()
-        }
-        
-        const updatedMeeting = {
-          ...currentMeeting,
-          notes: [...currentMeeting.notes, newBlock]
-        }
-        
-        set({ currentMeeting: updatedMeeting })
-        saveMeeting(updatedMeeting)
-        
-        return id
-      },
+      return {
+        meetings: updatedMeetings,
+        currentMeeting: updatedMeeting
+      }
+    })
+    
+    return newTask.id
+  },
+  
+  updateTask: (id, updates) => {
+    if (!get().currentMeetingId) return
+    
+    set(state => {
+      if (!state.currentMeeting) return state
       
-      updateNoteBlock: (id: string, updates: Partial<Omit<NoteBlock, 'id'>>) => {
-        const { currentMeeting } = get()
-        if (!currentMeeting) return false
-        
-        const updatedMeeting = {
-          ...currentMeeting,
-          notes: currentMeeting.notes.map(note =>
-            note.id === id ? { ...note, ...updates } : note
-          )
-        }
-        
-        set({ currentMeeting: updatedMeeting })
-        return saveMeeting(updatedMeeting)
-      },
+      const updatedTasks = state.currentMeeting.tasks.map(task => 
+        task.id === id ? { ...task, ...updates } : task
+      )
       
-      removeNoteBlock: (id: string) => {
-        const { currentMeeting } = get()
-        if (!currentMeeting) return false
-        
-        const updatedMeeting = {
-          ...currentMeeting,
-          notes: currentMeeting.notes.filter(note => note.id !== id)
-        }
-        
-        set({ currentMeeting: updatedMeeting })
-        return saveMeeting(updatedMeeting)
-      },
+      const updatedMeeting = {
+        ...state.currentMeeting,
+        tasks: updatedTasks
+      }
       
-      linkNoteToAgenda: (noteId: string, agendaItemId: string) => {
-        const { currentMeeting } = get()
-        if (!currentMeeting) return false
-        
-        const updatedMeeting = {
-          ...currentMeeting,
-          notes: currentMeeting.notes.map(note =>
-            note.id === noteId ? { ...note, linkedToAgendaItem: agendaItemId } : note
-          )
-        }
-        
-        set({ currentMeeting: updatedMeeting })
-        return saveMeeting(updatedMeeting)
-      },
+      const updatedMeetings = state.meetings.map(meeting => 
+        meeting.id === state.currentMeetingId ? updatedMeeting : meeting
+      )
       
-      // Task operations
-      addTask: (task: Omit<Task, 'id' | 'created'>) => {
-        const { currentMeeting } = get()
-        if (!currentMeeting) return ''
-        
-        const id = uuidv4()
-        const newTask: Task = {
-          ...task,
-          id,
-          created: new Date().toISOString()
-        }
-        
-        const updatedMeeting = {
-          ...currentMeeting,
-          tasks: [...currentMeeting.tasks, newTask]
-        }
-        
-        set({ currentMeeting: updatedMeeting })
-        saveMeeting(updatedMeeting)
-        
-        return id
-      },
+      saveMeetingsToStorage(updatedMeetings)
       
-      updateTask: (id: string, updates: Partial<Omit<Task, 'id'>>) => {
-        const { currentMeeting } = get()
-        if (!currentMeeting) return false
-        
-        const updatedMeeting = {
-          ...currentMeeting,
-          tasks: currentMeeting.tasks.map(task =>
-            task.id === id 
-              ? { ...task, ...updates, updated: new Date().toISOString() }
-              : task
-          )
-        }
-        
-        set({ currentMeeting: updatedMeeting })
-        return saveMeeting(updatedMeeting)
-      },
+      return {
+        meetings: updatedMeetings,
+        currentMeeting: updatedMeeting
+      }
+    })
+  },
+  
+  removeTask: (id) => {
+    if (!get().currentMeetingId) return
+    
+    set(state => {
+      if (!state.currentMeeting) return state
       
-      removeTask: (id: string) => {
-        const { currentMeeting } = get()
-        if (!currentMeeting) return false
-        
-        const updatedMeeting = {
-          ...currentMeeting,
-          tasks: currentMeeting.tasks.filter(task => task.id !== id)
-        }
-        
-        set({ currentMeeting: updatedMeeting })
-        return saveMeeting(updatedMeeting)
-      },
+      const updatedTasks = state.currentMeeting.tasks.filter(task => task.id !== id)
       
-      toggleTaskStatus: (id: string) => {
-        const { currentMeeting } = get()
-        if (!currentMeeting) return false
+      const updatedMeeting = {
+        ...state.currentMeeting,
+        tasks: updatedTasks
+      }
+      
+      const updatedMeetings = state.meetings.map(meeting => 
+        meeting.id === state.currentMeetingId ? updatedMeeting : meeting
+      )
+      
+      saveMeetingsToStorage(updatedMeetings)
+      
+      return {
+        meetings: updatedMeetings,
+        currentMeeting: updatedMeeting
+      }
+    })
+  },
+  
+  toggleTaskStatus: (id) => {
+    if (!get().currentMeetingId) return
+    
+    set(state => {
+      if (!state.currentMeeting) return state
+      
+      const updatedTasks = state.currentMeeting.tasks.map(task => {
+        if (task.id !== id) return task
         
-        const task = currentMeeting.tasks.find(t => t.id === id)
-        if (!task) return false
-        
+        // Toggle between Todo, In Progress, and Done
         const nextStatus = task.status === 'Todo' 
           ? 'In Progress' 
           : task.status === 'In Progress' 
             ? 'Done' 
             : 'Todo'
-        
-        return get().updateTask(id, { status: nextStatus })
-      },
-      
-      extractTaskFromText: (text: string, source: 'notes' | 'transcript') => {
-        // Import dynamically to avoid circular dependencies
-        return import('@/utils/taskExtractor').then(({ isLikelyActionItem }) => {
-          // Check if the text is likely an action item
-          if (!isLikelyActionItem(text)) {
-            return ''
-          }
-          
-          // Create a new task from the text
-          const taskId = get().addTask({
-            title: text,
-            priority: 'Medium',
-            status: 'Todo',
-            tags: [source],
-            createdFrom: source
-          })
-          
-          return taskId
-        })
-      },
-      
-      // Transcript operations
-      addTranscriptChunk: (chunk: Omit<TranscriptChunk, 'id'>) => {
-        const { currentMeeting } = get()
-        if (!currentMeeting) return ''
-        
-        const id = uuidv4()
-        const newChunk: TranscriptChunk = {
-          ...chunk,
-          id
-        }
-        
-        const updatedMeeting = {
-          ...currentMeeting,
-          transcripts: [...currentMeeting.transcripts, newChunk]
-        }
-        
-        set({ currentMeeting: updatedMeeting })
-        saveMeeting(updatedMeeting)
-        
-        return id
-      },
-      
-      updateTranscriptChunk: (id: string, updates: Partial<Omit<TranscriptChunk, 'id'>>) => {
-        const { currentMeeting } = get()
-        if (!currentMeeting) return false
-        
-        const updatedMeeting = {
-          ...currentMeeting,
-          transcripts: currentMeeting.transcripts.map(chunk =>
-            chunk.id === id ? { ...chunk, ...updates } : chunk
-          )
-        }
-        
-        set({ currentMeeting: updatedMeeting })
-        return saveMeeting(updatedMeeting)
-      },
-      
-      removeTranscriptChunk: (id: string) => {
-        const { currentMeeting } = get()
-        if (!currentMeeting) return false
-        
-        const updatedMeeting = {
-          ...currentMeeting,
-          transcripts: currentMeeting.transcripts.filter(chunk => chunk.id !== id)
-        }
-        
-        set({ currentMeeting: updatedMeeting })
-        return saveMeeting(updatedMeeting)
-      },
-      
-      extractTasksFromTranscript: (chunkId: string) => {
-        const { currentMeeting } = get()
-        if (!currentMeeting) return []
-        
-        const chunk = currentMeeting.transcripts.find(c => c.id === chunkId)
-        if (!chunk) return []
-        
-        // Use existing action items if available, otherwise extract from text
-        const actionItems = chunk.actionItems || []
-        
-        // If no action items are available, try to extract them from the text
-        if (actionItems.length === 0 && chunk.text) {
-          // Import dynamically to avoid circular dependencies
-          import('@/utils/taskExtractor').then(({ extractTasksFromTranscript }) => {
-            const extractedItems = extractTasksFromTranscript(chunk.text)
             
-            // Update the transcript chunk with extracted action items
-            if (extractedItems.length > 0) {
-              get().updateTranscriptChunk(chunk.id, { 
-                actionItems: extractedItems 
-              })
-              
-              // Create tasks from extracted items
-              extractedItems.forEach(item => {
-                get().addTask({
-                  title: item,
-                  priority: 'Medium',
-                  status: 'Todo',
-                  tags: ['transcript', 'auto-extracted'],
-                  createdFrom: 'transcript'
-                })
-              })
-            }
-          })
-        }
-        
-        const taskIds: string[] = []
-        
-        // Create tasks from existing action items
-        actionItems.forEach(actionItem => {
-          const taskId = get().addTask({
-            title: actionItem,
-            priority: 'Medium',
-            status: 'Todo',
-            tags: ['transcript'],
-            createdFrom: 'transcript'
-          })
-          
-          if (taskId) {
-            taskIds.push(taskId)
-          }
-        })
-        
-        return taskIds
-      },
-      
-      // Meeting lifecycle
-      startMeeting: () => {
-        const { currentMeeting } = get()
-        if (!currentMeeting) return false
-        
-        const updatedMeeting = {
-          ...currentMeeting,
-          startTime: new Date().toISOString()
-        }
-        
-        set({ currentMeeting: updatedMeeting })
-        return saveMeeting(updatedMeeting)
-      },
-      
-      endMeeting: () => {
-        const { currentMeeting } = get()
-        if (!currentMeeting) return false
-        
-        const endTime = new Date().toISOString()
-        const startTime = new Date(currentMeeting.startTime)
-        const duration = Math.round((new Date(endTime).getTime() - startTime.getTime()) / 60000)
-        
-        const updatedMeeting = {
-          ...currentMeeting,
-          endTime,
-          metadata: {
-            ...currentMeeting.metadata,
-            duration
-          }
-        }
-        
-        set({ currentMeeting: updatedMeeting })
-        return saveMeeting(updatedMeeting)
-      },
-      
-      saveMeetingToStorage: () => {
-        const { currentMeeting } = get()
-        if (!currentMeeting) return false
-        
-        return saveMeeting(currentMeeting)
-      },
-      
-      // Initialization
-      initializeMeetings: () => {
-        // Load meetings list from localStorage
-        const storedMeetings = loadFromStorage<Meeting[]>(STORAGE_KEYS.MEETINGS, [])
-        
-        // Convert to meeting summary format
-        const meetingSummaries = storedMeetings.map(meeting => ({
-          id: meeting.id,
-          title: meeting.title,
-          startTime: meeting.startTime,
-          lastModified: meeting.endTime || meeting.startTime
-        }))
-        
-        set({ meetings: meetingSummaries })
-      }
-    }),
-    {
-      name: STORAGE_KEYS.CURRENT_MEETING,
-      partialize: (state) => ({ 
-        currentMeeting: state.currentMeeting,
-        meetings: state.meetings 
+        return { ...task, status: nextStatus }
       })
+      
+      const updatedMeeting = {
+        ...state.currentMeeting,
+        tasks: updatedTasks
+      }
+      
+      const updatedMeetings = state.meetings.map(meeting => 
+        meeting.id === state.currentMeetingId ? updatedMeeting : meeting
+      )
+      
+      saveMeetingsToStorage(updatedMeetings)
+      
+      return {
+        meetings: updatedMeetings,
+        currentMeeting: updatedMeeting
+      }
+    })
+  }
+  // Transcription actions
+  setAssemblyApiKey: (apiKey) => {
+    try {
+      initializeAssemblyAI(apiKey)
+      set({ assemblyApiKey: apiKey })
+      
+      // Store API key in localStorage for persistence
+      localStorage.setItem('assemblyApiKey', apiKey)
+    } catch (error) {
+      console.error('Error setting AssemblyAI API key:', error)
+      throw error
     }
-  )
-)
+  },
+  
+  startTranscription: () => {
+    set({ isTranscribing: true })
+  },
+  
+  stopTranscription: () => {
+    set({ isTranscribing: false })
+  },
+  
+  setTranscriptionStatus: (status) => {
+    set({ transcriptionStatus: status })
+  },
+  
+  addTranscriptChunk: (chunk) => {
+    if (!get().currentMeetingId) return
+    
+    const newChunk: TranscriptChunk = {
+      ...chunk,
+      id: uuidv4()
+    }
+    
+    set(state => {
+      if (!state.currentMeeting) return state
+      
+      const updatedTranscripts = [...state.currentMeeting.transcripts, newChunk]
+      
+      const updatedMeeting = {
+        ...state.currentMeeting,
+        transcripts: updatedTranscripts
+      }
+      
+      const updatedMeetings = state.meetings.map(meeting => 
+        meeting.id === state.currentMeetingId ? updatedMeeting : meeting
+      )
+      
+      saveMeetingsToStorage(updatedMeetings)
+      
+      return {
+        meetings: updatedMeetings,
+        currentMeeting: updatedMeeting
+      }
+    })
+  }
+}))

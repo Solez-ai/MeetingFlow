@@ -1,14 +1,17 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { AgendaManager } from '../agenda/AgendaManager'
 import { AgendaSidebar } from '../agenda/AgendaSidebar'
 import { NotesContainer } from '../notes/NotesContainer'
 import { TaskManager } from '../tasks/TaskManager'
+import { TranscriptionPage } from '../transcription/TranscriptionPage'
 import { useMeetingStore } from '@/store/meetingStore'
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '../ui/tabs'
 
 export function MeetingWorkspace() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const [activeTab, setActiveTab] = useState<string>('agenda')
   
   const currentMeeting = useMeetingStore(state => state.currentMeeting)
   const createMeeting = useMeetingStore(state => state.createMeeting)
@@ -40,30 +43,51 @@ export function MeetingWorkspace() {
         </p>
       </div>
       
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-[calc(100vh-200px)]">
-        {/* Left Sidebar - Agenda Display */}
-        <div className="lg:col-span-3 h-full">
-          <AgendaSidebar />
-        </div>
+      <Tabs 
+        value={activeTab} 
+        onValueChange={setActiveTab} 
+        className="h-[calc(100vh-200px)]"
+      >
+        <TabsList className="mb-4">
+          <TabsTrigger value="agenda">Agenda & Notes</TabsTrigger>
+          <TabsTrigger value="tasks">Tasks</TabsTrigger>
+          <TabsTrigger value="transcription">Transcription</TabsTrigger>
+        </TabsList>
         
-        {/* Main Content Area */}
-        <div className="lg:col-span-9 grid grid-cols-1 lg:grid-cols-3 gap-6 h-full">
-          {/* Agenda Management Panel */}
-          <div className="lg:col-span-1 h-full agenda-panel">
-            <AgendaManager />
+        <TabsContent value="agenda" className="h-full">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-full">
+            {/* Left Sidebar - Agenda Display */}
+            <div className="lg:col-span-3 h-full">
+              <AgendaSidebar />
+            </div>
+            
+            {/* Main Content Area */}
+            <div className="lg:col-span-9 grid grid-cols-1 lg:grid-cols-2 gap-6 h-full">
+              {/* Agenda Management Panel */}
+              <div className="lg:col-span-1 h-full agenda-panel">
+                <AgendaManager />
+              </div>
+              
+              {/* Notes Panel */}
+              <div className="lg:col-span-1 h-full">
+                <NotesContainer />
+              </div>
+            </div>
           </div>
-          
-          {/* Notes Panel */}
-          <div className="lg:col-span-1 h-full">
-            <NotesContainer />
-          </div>
-          
-          {/* Tasks Panel */}
-          <div className="lg:col-span-1 h-full overflow-hidden">
+        </TabsContent>
+        
+        <TabsContent value="tasks" className="h-full">
+          <div className="h-full overflow-hidden">
             <TaskManager />
           </div>
-        </div>
-      </div>
+        </TabsContent>
+        
+        <TabsContent value="transcription" className="h-full">
+          <div className="h-full overflow-hidden">
+            <TranscriptionPage />
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }

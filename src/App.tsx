@@ -2,12 +2,15 @@ import { useEffect } from 'react'
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import { ErrorBoundary, RouterErrorBoundary } from '@/components/layout/ErrorBoundary'
 import { ThemeProvider } from '@/components/layout/ThemeProvider'
-import { ToastProvider } from '@/components/layout/ToastProvider'
 import { AppLayout } from '@/components/layout/AppLayout'
 import { Dashboard } from '@/components/Dashboard'
 import { MeetingWorkspace } from '@/components/meeting/MeetingWorkspace'
 import { Settings } from '@/components/settings/Settings'
 import { useMeetingStore } from '@/store/meetingStore'
+import type { MeetingState } from '@/store/meetingStore'
+import { Toaster } from '@/components/ui/toaster'
+import { initConfetti } from '@/utils/confetti'
+import { ApiKeyProvider } from '@/components/transcription/ApiKeyProvider'
 
 // Create router with React Router v7 data router pattern
 const router = createBrowserRouter([
@@ -37,19 +40,22 @@ const router = createBrowserRouter([
 ])
 
 function App() {
-  const initializeMeetings = useMeetingStore(state => state.initializeMeetings)
+  const initializeMeetings = useMeetingStore((state: MeetingState) => state.initializeMeetings)
   
   useEffect(() => {
     // Initialize meetings from localStorage on app start
     initializeMeetings()
+    
+    // Initialize confetti system
+    initConfetti()
   }, [initializeMeetings])
 
   return (
     <ErrorBoundary>
       <ThemeProvider>
-        <ToastProvider>
-          <RouterProvider router={router} />
-        </ToastProvider>
+        <ApiKeyProvider />
+        <RouterProvider router={router} />
+        <Toaster />
       </ThemeProvider>
     </ErrorBoundary>
   )

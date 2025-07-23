@@ -45,6 +45,16 @@ export interface TranscriptChunk {
   actionItems?: string[]
 }
 
+export interface TranscriptionStatus {
+  id: string
+  status: 'queued' | 'processing' | 'completed' | 'error'
+  text?: string
+  audioUrl?: string
+  error?: string
+  createdAt: string
+  updatedAt: string
+}
+
 // Meeting types
 export interface Meeting {
   id: string

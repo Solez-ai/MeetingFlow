@@ -1,108 +1,104 @@
-# 🧠 MeetingFlow
+# MeetingFlow
 
-> ✨ Privacy-First Meeting Productivity Tool  
-> 📅 Capture, Transcribe, and Automate Meetings with AI
+MeetingFlow is a privacy-first, browser-based meeting productivity suite that helps you manage agendas, take notes, and track tasks - all without requiring a backend or cloud storage.
 
-MeetingFlow is a modern meeting workspace that helps you manage your entire meeting workflow—from agenda planning to real-time transcription, collaborative note-taking, and task generation—without relying on a backend or external databases. The application runs entirely in the browser using LocalStorage, EmailJS, AssemblyAI, and Zustand for state management, providing a seamless, privacy-first meeting experience.
+## Features
 
----
+- **Agenda Management**: Create and manage meeting agendas with time balancing
+- **Rich Text Notes**: Notion-style block editor powered by TipTap
+- **Task Management**: Kanban-style task board with filtering and sorting
+- **Transcription**: Upload audio files for automatic transcription (via AssemblyAI)
+- **Voice Commands**: Control the app hands-free with voice commands
+- **Real-time Collaboration**: Peer-to-peer collaboration without a server
+- **Export & Share**: Export to Markdown, PDF, or share via encoded links
 
-## 🚀 Tech Stack
+## Task Management System
 
-| Layer        | Tech                      |
-|--------------|---------------------------|
-| Frontend     | **React 19**, **Vite**    |
-| Styling      | **Tailwind CSS 4**, **ShadCN UI** |
-| Transcription| **AssemblyAI**            |
-| Email        | **EmailJS**               |
-| State Mgmt   | **Zustand**               |
-| Routing      | **React Router v7**       |
-| Rich Editor  | **TipTap**                |
-| Real-time Sync| **WebRTC** with simple-peer |
-| Icons        | **Lucide Icons** / **Radix Icons** |
-| Printing     | `react-to-print` (for export) |
-| ID / UID     | `uuid`                    |
-| Storage      | `localStorage` (no backend) |
-| Linting      | ESLint + TypeScript       |
+The task management system in MeetingFlow is designed to be intuitive and powerful, allowing you to:
 
----
+### Creating Tasks
 
-## 🧪 Features
+Tasks can be created in multiple ways:
 
-- 📝 Create and manage **time-balanced meeting agendas**
-- 📊 Take collaborative notes with a **Notion-style block editor**
-- 🎙️ **Transcribe audio recordings** and extract action items automatically
-- ✅ Manage tasks with **due dates, priorities, and reminders**
-- 🗣️ Use **voice commands** to control the application hands-free
-- 🔄 **Export meeting data** in multiple formats and share sessions
-- 🔒 **Privacy-first**: All data stays on your device with no backend dependencies
-- 📱 **Responsive design** that works across devices
+1. **Manually**: Click the "New Task" button in the task panel
+2. **From Notes**: Highlight text in the notes editor and click "Convert to Task"
+3. **From Transcripts**: Click "Make Task" on detected action items in transcripts
+4. **From Voice Commands**: Say "Mark action item [text]" to create a task
 
----
+### Task Organization
 
-## 🚀 Getting Started
+Tasks are organized in a Kanban board with three columns:
 
-### Prerequisites
+- **To Do**: Tasks that need to be done
+- **In Progress**: Tasks that are currently being worked on
+- **Done**: Completed tasks
 
-- Node.js 18+
-- npm or yarn
+You can drag and drop tasks between columns to update their status.
 
-### Installation
+### Task Views
 
-1. Clone the repository
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-3. Create a `.env` file in the root directory with the following variables:
-   ```
-   VITE_ASSEMBLYAI_API_KEY=your_assemblyai_api_key
-   VITE_EMAILJS_USER_ID=your_emailjs_user_id
-   VITE_EMAILJS_SERVICE_ID=your_emailjs_service_id
-   VITE_EMAILJS_TEMPLATE_ID=your_emailjs_template_id
-   ```
-4. Start the development server:
-   ```bash
-   npm run dev
-   ```
+The task panel offers multiple views:
 
----
+- **Kanban**: Traditional board view with columns for each status
+- **Today**: Tasks due today
+- **Upcoming**: Tasks due in the next 7 days
+- **All**: All tasks in a list view
 
-## 📁 Project Structure
+### Task Filtering and Sorting
 
-```
-meetingflow/
-├── public/            # Static assets
-├── src/
-│   ├── assets/        # Images and other assets
-│   ├── components/    # React components
-│   │   ├── agenda/    # Agenda-related components
-│   │   ├── layout/    # Layout components
-│   │   ├── notes/     # Notes editor components
-│   │   ├── tasks/     # Task management components
-│   │   ├── transcription/ # Transcription components
-│   │   ├── ui/        # UI components (shadcn/ui)
-│   │   └── voice/     # Voice command components
-│   ├── hooks/         # Custom React hooks
-│   ├── lib/           # Utility functions and constants
-│   ├── services/      # Service classes for external APIs
-│   ├── store/         # Zustand store
-│   ├── types/         # TypeScript type definitions
-│   ├── utils/         # Utility functions
-│   ├── App.tsx        # Main App component
-│   └── main.tsx       # Entry point
-├── .env               # Environment variables
-├── index.html         # HTML template
-├── package.json       # Dependencies and scripts
-├── tsconfig.json      # TypeScript configuration
-└── vite.config.ts     # Vite configuration
-```
+You can filter tasks by:
 
----
+- **Tags**: Filter by specific tags
+- **Priority**: Sort by High, Medium, or Low priority
+- **Due Date**: Sort by due date
+- **Creation Date**: Sort by when the task was created
 
-## 📜 Available Scripts
+### Task Integration with Notes
 
-- `npm run dev` - Start the development server
-- `npm run build` - Build for production
-- `npm run preview` - Preview the production build
-- `npm run lint` - Run ESLint
+The notes editor is integrated with the task system:
+
+- Highlight text and convert it to a task
+- Task checkboxes in the editor automatically create tasks when checked
+- The system can detect potential tasks in your notes and suggest creating them
+
+### Task Notifications
+
+When tasks are created or completed:
+
+- Visual feedback with toast notifications
+- Confetti animation for task completion
+- Email reminders for upcoming tasks (via EmailJS)
+
+## Getting Started
+
+1. Clone this repository
+2. Install dependencies: `npm install`
+3. Start the development server: `npm run dev`
+4. Open your browser to `http://localhost:5173`
+
+## Technologies Used
+
+- **React**: UI framework
+- **TypeScript**: Type safety
+- **Vite**: Build tool
+- **Zustand**: State management
+- **TipTap**: Rich text editor
+- **Tailwind CSS**: Styling
+- **Shadcn/UI**: UI components
+- **React Router**: Navigation
+- **AssemblyAI**: Transcription
+- **EmailJS**: Email notifications
+- **WebRTC**: Peer-to-peer collaboration
+
+## Privacy First
+
+MeetingFlow is designed with privacy in mind:
+
+- All data is stored locally in your browser's localStorage
+- No data is sent to any server unless explicitly requested
+- Collaboration is peer-to-peer without a central server
+- API keys are stored in your browser and never shared
+
+## License
+
+MIT
