@@ -34,6 +34,7 @@ export interface MeetingState {
   stopTranscription: () => void
   setTranscriptionStatus: (status: TranscriptionStatus) => void
   addTranscriptChunk: (chunk: Omit<TranscriptChunk, 'id'>) => void
+  updateTranscripts: (transcripts: TranscriptChunk[]) => void
 }
 
 // Load meetings from localStorage
@@ -303,7 +304,7 @@ export const useMeetingStore = create<MeetingState>((set, get) => ({
         currentMeeting: updatedMeeting
       }
     })
-  }
+  },
   // Transcription actions
   setAssemblyApiKey: (apiKey) => {
     try {
@@ -346,6 +347,30 @@ export const useMeetingStore = create<MeetingState>((set, get) => ({
       const updatedMeeting = {
         ...state.currentMeeting,
         transcripts: updatedTranscripts
+      }
+      
+      const updatedMeetings = state.meetings.map(meeting => 
+        meeting.id === state.currentMeetingId ? updatedMeeting : meeting
+      )
+      
+      saveMeetingsToStorage(updatedMeetings)
+      
+      return {
+        meetings: updatedMeetings,
+        currentMeeting: updatedMeeting
+      }
+    })
+  },
+  
+  updateTranscripts: (transcripts) => {
+    if (!get().currentMeetingId) return
+    
+    set(state => {
+      if (!state.currentMeeting) return state
+      
+      const updatedMeeting = {
+        ...state.currentMeeting,
+        transcripts
       }
       
       const updatedMeetings = state.meetings.map(meeting => 

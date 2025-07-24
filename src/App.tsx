@@ -6,6 +6,7 @@ import { AppLayout } from '@/components/layout/AppLayout'
 import { Dashboard } from '@/components/Dashboard'
 import { MeetingWorkspace } from '@/components/meeting/MeetingWorkspace'
 import { Settings } from '@/components/settings/Settings'
+import { ActionItemsPage } from '@/components/transcription/ActionItemsPage'
 import { useMeetingStore } from '@/store/meetingStore'
 import type { MeetingState } from '@/store/meetingStore'
 import { Toaster } from '@/components/ui/toaster'
@@ -34,6 +35,10 @@ const router = createBrowserRouter([
       {
         path: 'settings',
         element: <Settings />,
+      },
+      {
+        path: 'action-items',
+        element: <ActionItemsPage />,
       },
     ],
   },

@@ -139,5 +139,3 @@ export function AgendaItemComponent({ item, onUpdate, onRemove }: AgendaItemProp
     </div>
   )
 }
-  )
-}

@@ -11,7 +11,8 @@ import {
   FileTextIcon, 
   CheckSquareIcon, 
   MicIcon, 
-  DownloadIcon 
+  DownloadIcon,
+  Sparkles
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { cn } from '@/lib/utils'
@@ -114,6 +115,16 @@ export function Navbar() {
                 >
                   <CheckSquareIcon className="h-4 w-4" />
                   Tasks
+                </Button>
+              </Link>
+              <Link to="/action-items">
+                <Button 
+                  variant={isActive('/action-items') ? 'secondary' : 'ghost'} 
+                  size="sm"
+                  className="gap-2 font-medium"
+                >
+                  <Sparkles className="h-4 w-4" />
+                  Action Items
                 </Button>
               </Link>
             </nav>
@@ -235,6 +246,16 @@ export function Navbar() {
                 >
                   <CheckSquareIcon className="h-4 w-4" />
                   Tasks
+                </Button>
+              </Link>
+              <Link to="/action-items" onClick={closeMobileMenu}>
+                <Button 
+                  variant={isActive('/action-items') ? 'secondary' : 'ghost'} 
+                  size="sm"
+                  className="w-full justify-start gap-2"
+                >
+                  <Sparkles className="h-4 w-4" />
+                  Action Items
                 </Button>
               </Link>
               <Link to="/meeting/new?transcribe=true" onClick={closeMobileMenu}>
