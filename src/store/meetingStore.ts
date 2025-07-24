@@ -16,7 +16,7 @@ export interface MeetingState {
   // Meeting actions
   initializeMeetings: () => void
   setCurrentMeeting: (meetingId: string) => void
-  createMeeting: (title: string) => Meeting
+  createMeeting: (title: string, duration?: number) => Meeting
   loadMeeting: (id: string) => Meeting | undefined
   addMeeting: (meeting: Omit<Meeting, 'id' | 'tasks'>) => void
   updateMeeting: (id: string, updates: Partial<Omit<Meeting, 'id'>>) => void
@@ -34,6 +34,12 @@ export interface MeetingState {
   updateTask: (id: string, updates: Partial<Omit<Task, 'id'>>) => void
   removeTask: (id: string) => void
   toggleTaskStatus: (id: string) => void
+  
+  // Additional methods
+  deleteMeeting: (id: string) => void
+  addNoteBlock: (block: Omit<any, 'id'>) => void
+  updateNoteBlock: (id: string, updates: any) => void
+  saveMeetingToStorage: () => void
   
   // Transcription actions
   setAssemblyApiKey: (apiKey: string) => void
@@ -89,7 +95,7 @@ export const useMeetingStore = create<MeetingState>((set, get) => ({
     })
   },
   
-  createMeeting: (title) => {
+  createMeeting: (title, duration) => {
     const newMeeting: Meeting = {
       id: uuidv4(),
       title,
@@ -436,7 +442,7 @@ export const useMeetingStore = create<MeetingState>((set, get) => ({
         if (task.id !== id) return task
         
         // Toggle between Todo, In Progress, and Done
-        const nextStatus = task.status === 'Todo' 
+        const nextStatus: Task['status'] = task.status === 'Todo' 
           ? 'In Progress' 
           : task.status === 'In Progress' 
             ? 'Done' 
@@ -541,5 +547,36 @@ export const useMeetingStore = create<MeetingState>((set, get) => ({
         currentMeeting: updatedMeeting
       }
     })
+  },
+  
+  // Additional missing methods
+  deleteMeeting: (id: string) => {
+    set(state => {
+      const updatedMeetings = state.meetings.filter(meeting => meeting.id !== id)
+      saveMeetingsToStorage(updatedMeetings)
+      
+      return {
+        meetings: updatedMeetings,
+        currentMeeting: state.currentMeetingId === id ? null : state.currentMeeting,
+        currentMeetingId: state.currentMeetingId === id ? null : state.currentMeetingId
+      }
+    })
+  },
+  
+  addNoteBlock: (block: any) => {
+    // Implementation for adding note blocks
+    console.log('Adding note block:', block)
+  },
+  
+  updateNoteBlock: (id: string, updates: any) => {
+    // Implementation for updating note blocks
+    console.log('Updating note block:', id, updates)
+  },
+  
+  saveMeetingToStorage: () => {
+    const state = get()
+    if (state.meetings.length > 0) {
+      saveMeetingsToStorage(state.meetings)
+    }
   }
 }))

@@ -33,6 +33,9 @@ interface EmailTemplateParams {
   // Meeting-related parameters
   meeting_title?: string
   meeting_date?: string
+  
+  // Index signature for additional properties
+  [key: string]: string | undefined
   agenda_content?: string
   notes_content?: string
   tasks_summary?: string
@@ -47,9 +50,9 @@ interface EmailTemplateParams {
  * Service for handling EmailJS notifications with comprehensive template support
  */
 export class EmailService {
-  private userId: string
-  private serviceId: string
-  private templateId: string
+  private userId: string = ''
+  private serviceId: string = ''
+  private templateId: string = ''
   private isInitialized: boolean = false
   
   constructor() {

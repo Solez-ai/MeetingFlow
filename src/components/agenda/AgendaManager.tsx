@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useMeetingStore } from '@/store/meetingStore'
 import { AgendaForm } from './AgendaForm'
 import { AgendaList } from './AgendaList'

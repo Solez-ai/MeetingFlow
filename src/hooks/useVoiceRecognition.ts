@@ -26,7 +26,7 @@ export function useVoiceRecognition(options: UseVoiceRecognitionOptions = {}) {
   })
 
   const recognitionRef = useRef<any>(null)
-  const timeoutRef = useRef<NodeJS.Timeout>()
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   // Initialize speech recognition
   useEffect(() => {

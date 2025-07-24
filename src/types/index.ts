@@ -69,6 +69,7 @@ export interface Meeting {
     duration?: number
     participants?: string[]
     tags?: string[]
+    description?: string
   }
 }
 
@@ -88,3 +89,6 @@ export interface CollaborationState {
 
 // Re-export voice types
 export * from './voice'
+
+// Re-export collaboration types
+export * from './collaboration'

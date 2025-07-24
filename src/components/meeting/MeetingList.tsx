@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useMeetingStore } from '@/store/meetingStore'
-import { Meeting } from '@/types'
+
 import { 
   ClockIcon, 
   CalendarIcon, 
@@ -17,7 +17,8 @@ import {
   CheckSquareIcon,
   MicIcon,
   ArrowRightIcon,
-  AlertCircleIcon
+  AlertCircleIcon,
+  PlusIcon
 } from 'lucide-react'
 
 interface MeetingListProps {
@@ -27,7 +28,8 @@ interface MeetingListProps {
 }
 
 export function MeetingList({ limit, showSearch = true, showActions = true }: MeetingListProps) {
-  const { meetings, deleteMeeting, loadMeeting } = useMeetingStore()
+  const { meetings, loadMeeting } = useMeetingStore()
+  const deleteMeeting = useMeetingStore(state => state.deleteMeeting)
   const [searchTerm, setSearchTerm] = useState('')
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -275,7 +277,7 @@ export function MeetingList({ limit, showSearch = true, showActions = true }: Me
                   <span className="flex items-center gap-1">
                     <CheckSquareIcon className="h-3 w-3" />
                     {stats.tasks} tasks
-                    {stats.pendingTasks > 0 && (
+                    {stats.pendingTasks && stats.pendingTasks > 0 && (
                       <span className="inline-flex items-center justify-center h-4 w-4 rounded-full bg-amber-500 text-white text-xs font-medium">
                         {stats.pendingTasks}
                       </span>

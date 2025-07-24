@@ -76,11 +76,12 @@ export const startRealtimeTranscription = async (onTranscript: (text: string) =>
   const client = getAssemblyClient()
   
   try {
-    const realtimeTranscriber = await client.realtime.transcribe({
+    const realtimeTranscriber = client.realtime.transcriber({
       sampleRate: 16000,
-      onTranscript: (transcript) => {
-        onTranscript(transcript.text)
-      },
+    })
+    
+    realtimeTranscriber.on('transcript', (transcript) => {
+      onTranscript(transcript.text)
     })
     
     return realtimeTranscriber

@@ -84,8 +84,7 @@ export function MeetingCreateForm({ onCancel, onSuccess }: MeetingCreateFormProp
         
         // Update meeting with metadata
         const updateMeeting = useMeetingStore.getState().updateMeeting
-        updateMeeting({
-          id: meeting.id,
+        updateMeeting(meeting.id, {
           metadata: {
             ...meeting.metadata,
             participants,

@@ -6,6 +6,7 @@ import { NotesContainer } from '../notes/NotesContainer'
 import { TaskManager } from '../tasks/TaskManager'
 import { TranscriptionPage } from '../transcription/TranscriptionPage'
 import { VoiceCommandButton } from '../voice/VoiceCommandButton'
+import { CollaborationProvider, CollaborationButton } from '../collaboration'
 import { useVoiceKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts'
 import { useMeetingStore } from '@/store/meetingStore'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../ui/tabs'
@@ -38,18 +39,24 @@ export function MeetingWorkspace() {
   }, [id, currentMeeting, createMeeting, loadMeeting, navigate])
   
   return (
-    <div className="h-full">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold">
-          {currentMeeting?.title || 'Loading...'}
-        </h1>
-        <p className="text-muted-foreground">
-          {new Date(currentMeeting?.startTime || Date.now()).toLocaleString()}
-        </p>
-      </div>
-      
-      {/* Floating Voice Command Button */}
-      <VoiceCommandButton variant="floating" />
+    <CollaborationProvider>
+      <div className="h-full">
+        <div className="mb-6 flex justify-between items-start">
+          <div>
+            <h1 className="text-2xl font-bold">
+              {currentMeeting?.title || 'Loading...'}
+            </h1>
+            <p className="text-muted-foreground">
+              {new Date(currentMeeting?.startTime || Date.now()).toLocaleString()}
+            </p>
+          </div>
+          
+          {/* Collaboration Button */}
+          <CollaborationButton />
+        </div>
+        
+        {/* Floating Voice Command Button */}
+        <VoiceCommandButton variant="floating" />
       
       <Tabs 
         value={activeTab} 
@@ -96,6 +103,7 @@ export function MeetingWorkspace() {
           </div>
         </TabsContent>
       </Tabs>
-    </div>
+      </div>
+    </CollaborationProvider>
   )
 }

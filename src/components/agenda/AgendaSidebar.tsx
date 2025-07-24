@@ -26,7 +26,7 @@ export function AgendaSidebar() {
       <CardContent className="pt-0">
         {sortedAgenda.length > 0 ? (
           <div className="space-y-3">
-            {sortedAgenda.map((item, index) => (
+            {sortedAgenda.map((item) => (
               <div key={item.id} className="border-l-2 pl-3 py-1">
                 <div className="flex justify-between">
                   <div className="font-medium">{item.title}</div>

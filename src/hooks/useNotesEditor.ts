@@ -6,7 +6,9 @@ import TaskList from '@tiptap/extension-task-list'
 import TaskItem from '@tiptap/extension-task-item'
 import Placeholder from '@tiptap/extension-placeholder'
 import CodeBlock from '@tiptap/extension-code-block'
-import { lowlight } from 'lowlight'
+import { createLowlight } from 'lowlight'
+
+const lowlight = createLowlight()
 import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight'
 import { useMeetingStore } from '@/store/meetingStore'
 import { NoteBlock } from '@/types'

@@ -42,7 +42,9 @@ export function AgendaList({ items, onReorder }: AgendaListProps) {
     
     const newItems = [...orderedItems]
     const [removed] = newItems.splice(sourceIndex, 1)
-    newItems.splice(destinationIndex, 0, removed)
+    if (removed) {
+      newItems.splice(destinationIndex, 0, removed)
+    }
     
     // Update order property
     const reorderedItems = newItems.map((item, index) => ({

@@ -6,6 +6,13 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 /**
+ * Generate a unique ID
+ */
+export function generateId(): string {
+  return Math.random().toString(36).substr(2, 9)
+}
+
+/**
  * Debounce function to limit the rate at which a function can fire
  */
 export function debounce<T extends (...args: any[]) => any>(
