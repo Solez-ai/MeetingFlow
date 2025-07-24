@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { v4 as uuidv4 } from 'uuid'
-import { Meeting, Task, TranscriptChunk, TranscriptionStatus } from '@/types'
+import { Meeting, Task, TranscriptChunk, TranscriptionStatus, AgendaItem } from '@/types'
 import { initializeAssemblyAI } from '@/services/transcriptionService'
 
 export interface MeetingState {
@@ -21,6 +21,13 @@ export interface MeetingState {
   addMeeting: (meeting: Omit<Meeting, 'id' | 'tasks'>) => void
   updateMeeting: (id: string, updates: Partial<Omit<Meeting, 'id'>>) => void
   removeMeeting: (id: string) => void
+  
+  // Agenda actions
+  addAgendaItem: (item: Omit<AgendaItem, 'id' | 'order'>) => void
+  updateAgendaItem: (id: string, updates: Partial<Omit<AgendaItem, 'id'>>) => void
+  removeAgendaItem: (id: string) => void
+  reorderAgendaItems: (itemIds: string[]) => void
+  generateTimeBalancedAgenda: (totalDuration: number) => void
   
   // Task actions
   addTask: (task: Omit<Task, 'id' | 'created'>) => string
@@ -177,6 +184,156 @@ export const useMeetingStore = create<MeetingState>((set, get) => ({
         meetings: filteredMeetings,
         currentMeetingId: needNewCurrent ? (filteredMeetings[0]?.id || null) : state.currentMeetingId,
         currentMeeting: needNewCurrent ? (filteredMeetings[0] || null) : state.currentMeeting
+      }
+    })
+  },
+  
+  // Agenda actions
+  addAgendaItem: (item) => {
+    if (!get().currentMeetingId) return
+    
+    const newItem: AgendaItem = {
+      ...item,
+      id: uuidv4(),
+      order: get().currentMeeting?.agenda.length || 0
+    }
+    
+    set(state => {
+      if (!state.currentMeeting) return state
+      
+      const updatedAgenda = [...state.currentMeeting.agenda, newItem]
+      
+      const updatedMeeting = {
+        ...state.currentMeeting,
+        agenda: updatedAgenda
+      }
+      
+      const updatedMeetings = state.meetings.map(meeting => 
+        meeting.id === state.currentMeetingId ? updatedMeeting : meeting
+      )
+      
+      saveMeetingsToStorage(updatedMeetings)
+      
+      return {
+        meetings: updatedMeetings,
+        currentMeeting: updatedMeeting
+      }
+    })
+  },
+  
+  updateAgendaItem: (id, updates) => {
+    if (!get().currentMeetingId) return
+    
+    set(state => {
+      if (!state.currentMeeting) return state
+      
+      const updatedAgenda = state.currentMeeting.agenda.map(item => 
+        item.id === id ? { ...item, ...updates } : item
+      )
+      
+      const updatedMeeting = {
+        ...state.currentMeeting,
+        agenda: updatedAgenda
+      }
+      
+      const updatedMeetings = state.meetings.map(meeting => 
+        meeting.id === state.currentMeetingId ? updatedMeeting : meeting
+      )
+      
+      saveMeetingsToStorage(updatedMeetings)
+      
+      return {
+        meetings: updatedMeetings,
+        currentMeeting: updatedMeeting
+      }
+    })
+  },
+  
+  removeAgendaItem: (id) => {
+    if (!get().currentMeetingId) return
+    
+    set(state => {
+      if (!state.currentMeeting) return state
+      
+      const updatedAgenda = state.currentMeeting.agenda.filter(item => item.id !== id)
+      
+      const updatedMeeting = {
+        ...state.currentMeeting,
+        agenda: updatedAgenda
+      }
+      
+      const updatedMeetings = state.meetings.map(meeting => 
+        meeting.id === state.currentMeetingId ? updatedMeeting : meeting
+      )
+      
+      saveMeetingsToStorage(updatedMeetings)
+      
+      return {
+        meetings: updatedMeetings,
+        currentMeeting: updatedMeeting
+      }
+    })
+  },
+  
+  reorderAgendaItems: (itemIds) => {
+    if (!get().currentMeetingId) return
+    
+    set(state => {
+      if (!state.currentMeeting) return state
+      
+      const updatedAgenda = itemIds.map((id, index) => {
+        const item = state.currentMeeting!.agenda.find(item => item.id === id)
+        return item ? { ...item, order: index } : null
+      }).filter(Boolean) as AgendaItem[]
+      
+      const updatedMeeting = {
+        ...state.currentMeeting,
+        agenda: updatedAgenda
+      }
+      
+      const updatedMeetings = state.meetings.map(meeting => 
+        meeting.id === state.currentMeetingId ? updatedMeeting : meeting
+      )
+      
+      saveMeetingsToStorage(updatedMeetings)
+      
+      return {
+        meetings: updatedMeetings,
+        currentMeeting: updatedMeeting
+      }
+    })
+  },
+  
+  generateTimeBalancedAgenda: (totalDuration) => {
+    if (!get().currentMeetingId) return
+    
+    set(state => {
+      if (!state.currentMeeting || state.currentMeeting.agenda.length === 0) return state
+      
+      const agenda = [...state.currentMeeting.agenda]
+      const wrapUpTime = 5 // Reserve 5 minutes for wrap-up
+      const availableTime = totalDuration - wrapUpTime
+      const timePerItem = Math.floor(availableTime / agenda.length)
+      
+      const updatedAgenda = agenda.map(item => ({
+        ...item,
+        duration: timePerItem
+      }))
+      
+      const updatedMeeting = {
+        ...state.currentMeeting,
+        agenda: updatedAgenda
+      }
+      
+      const updatedMeetings = state.meetings.map(meeting => 
+        meeting.id === state.currentMeetingId ? updatedMeeting : meeting
+      )
+      
+      saveMeetingsToStorage(updatedMeetings)
+      
+      return {
+        meetings: updatedMeetings,
+        currentMeeting: updatedMeeting
       }
     })
   },

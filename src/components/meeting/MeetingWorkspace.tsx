@@ -5,6 +5,8 @@ import { AgendaSidebar } from '../agenda/AgendaSidebar'
 import { NotesContainer } from '../notes/NotesContainer'
 import { TaskManager } from '../tasks/TaskManager'
 import { TranscriptionPage } from '../transcription/TranscriptionPage'
+import { VoiceCommandButton } from '../voice/VoiceCommandButton'
+import { useVoiceKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts'
 import { useMeetingStore } from '@/store/meetingStore'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../ui/tabs'
 
@@ -16,6 +18,9 @@ export function MeetingWorkspace() {
   const currentMeeting = useMeetingStore(state => state.currentMeeting)
   const createMeeting = useMeetingStore(state => state.createMeeting)
   const loadMeeting = useMeetingStore(state => state.loadMeeting)
+  
+  // Enable keyboard shortcuts for voice commands
+  useVoiceKeyboardShortcuts()
   
   // Load or create meeting on component mount
   useEffect(() => {
@@ -42,6 +47,9 @@ export function MeetingWorkspace() {
           {new Date(currentMeeting?.startTime || Date.now()).toLocaleString()}
         </p>
       </div>
+      
+      {/* Floating Voice Command Button */}
+      <VoiceCommandButton variant="floating" />
       
       <Tabs 
         value={activeTab} 

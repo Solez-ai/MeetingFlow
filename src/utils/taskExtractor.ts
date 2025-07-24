@@ -54,3 +54,65 @@ export function extractPotentialTags(text: string): string[] {
   // Remove duplicates and return
   return Array.from(new Set(tags));
 }
+
+/**
+ * Extracts tasks from notes content
+ */
+export function extractTasksFromNotes(notesContent: string): Array<{
+  title: string;
+  description?: string;
+  tags: string[];
+  priority: 'Low' | 'Medium' | 'High';
+}> {
+  if (!notesContent) return [];
+  
+  const tasks: Array<{
+    title: string;
+    description?: string;
+    tags: string[];
+    priority: 'Low' | 'Medium' | 'High';
+  }> = [];
+  
+  // Split content into lines
+  const lines = notesContent.split('\n').filter(line => line.trim());
+  
+  for (const line of lines) {
+    const trimmedLine = line.trim();
+    
+    // Skip empty lines and headers
+    if (!trimmedLine || trimmedLine.startsWith('#')) continue;
+    
+    // Check if this line is likely an action item
+    if (isLikelyActionItem(trimmedLine)) {
+      // Clean up the text to create a task title
+      let title = trimmedLine
+        .replace(/^[-*•]\s*/, '') // Remove bullet points
+        .replace(/^\d+\.\s*/, '') // Remove numbered lists
+        .replace(/^(todo|action item|task):\s*/i, '') // Remove prefixes
+        .trim();
+      
+      if (title.length > 0) {
+        const tags = extractPotentialTags(title);
+        
+        // Determine priority based on keywords
+        let priority: 'Low' | 'Medium' | 'High' = 'Medium';
+        const lowerTitle = title.toLowerCase();
+        
+        if (lowerTitle.includes('urgent') || lowerTitle.includes('asap') || lowerTitle.includes('critical')) {
+          priority = 'High';
+        } else if (lowerTitle.includes('later') || lowerTitle.includes('eventually') || lowerTitle.includes('nice to have')) {
+          priority = 'Low';
+        }
+        
+        tasks.push({
+          title,
+          description: `Extracted from notes`,
+          tags,
+          priority
+        });
+      }
+    }
+  }
+  
+  return tasks;
+}

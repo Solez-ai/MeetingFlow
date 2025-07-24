@@ -7,6 +7,7 @@ import { Dashboard } from '@/components/Dashboard'
 import { MeetingWorkspace } from '@/components/meeting/MeetingWorkspace'
 import { Settings } from '@/components/settings/Settings'
 import { ActionItemsPage } from '@/components/transcription/ActionItemsPage'
+import { VoiceCommandProvider } from '@/components/voice/VoiceCommandProvider'
 import { useMeetingStore } from '@/store/meetingStore'
 import type { MeetingState } from '@/store/meetingStore'
 import { Toaster } from '@/components/ui/toaster'
@@ -58,9 +59,11 @@ function App() {
   return (
     <ErrorBoundary>
       <ThemeProvider>
-        <ApiKeyProvider />
-        <RouterProvider router={router} />
-        <Toaster />
+        <VoiceCommandProvider>
+          <ApiKeyProvider />
+          <RouterProvider router={router} />
+          <Toaster />
+        </VoiceCommandProvider>
       </ThemeProvider>
     </ErrorBoundary>
   )

@@ -1,6 +1,7 @@
 import { Link, useLocation } from 'react-router-dom'
 import { useTheme } from './ThemeProvider'
 import { Button } from '../ui/button'
+import { VoiceCommandIndicator } from '../voice/VoiceCommandIndicator'
 import { 
   MoonIcon, 
   SunIcon, 
@@ -131,6 +132,9 @@ export function Navbar() {
           </div>
           
           <div className="flex items-center gap-2">
+            {/* Voice Command Indicator */}
+            <VoiceCommandIndicator className="hidden sm:flex mr-2" showText />
+            
             {/* Quick Actions - Desktop */}
             <div className="hidden md:flex items-center">
               <Link to="/meeting/new?transcribe=true">

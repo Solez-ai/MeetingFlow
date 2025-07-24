@@ -1,9 +1,15 @@
 import { useTheme } from '../layout/ThemeProvider'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card'
 import { Button } from '../ui/button'
+import { VoiceCommands } from '../voice/VoiceCommands'
+import { VoiceCommandTest } from '../voice/VoiceCommandTest'
+import { useAppStore } from '@/store'
+import { useState } from 'react'
 
 export function Settings() {
   const { theme, setTheme } = useTheme()
+  const { settings } = useAppStore()
+  const [showVoiceTest, setShowVoiceTest] = useState(false)
   
   return (
     <div className="space-y-6">
@@ -50,6 +56,33 @@ export function Settings() {
                 </Button>
               </div>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Voice Commands Settings */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between">
+              Voice Commands
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowVoiceTest(!showVoiceTest)}
+              >
+                {showVoiceTest ? 'Hide' : 'Show'} Test Panel
+              </Button>
+            </CardTitle>
+            <CardDescription>
+              Configure voice command recognition and control
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <VoiceCommands />
+            {showVoiceTest && (
+              <div className="mt-6 pt-6 border-t">
+                <VoiceCommandTest />
+              </div>
+            )}
           </CardContent>
         </Card>
 

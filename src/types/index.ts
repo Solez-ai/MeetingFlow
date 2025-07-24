@@ -85,3 +85,6 @@ export interface CollaborationState {
   peers: Peer[]
   isConnected: boolean
 }
+
+// Re-export voice types
+export * from './voice'
