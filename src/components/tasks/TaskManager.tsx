@@ -1,7 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Card, CardContent } from '../ui/card'
 import { Button } from '../ui/button'
-import { Plus, Calendar, Clock, CheckCircle, Filter, ArrowDownAZ } from 'lucide-react'
+import { Plus, Calendar, Clock, CheckCircle, Filter, ArrowDownAZ, Mail, Send } from 'lucide-react'
 import { useMeetingStore } from '@/store/meetingStore'
 import { TaskColumn } from './TaskColumn'
 import { TaskDialog } from './TaskDialog'
@@ -11,7 +11,7 @@ import { format } from 'date-fns'
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover'
 import { Badge } from '../ui/badge'
 import { Tabs, TabsList, TabsTrigger } from '../ui/tabs'
-
+import { useEmailNotifications } from '@/hooks/useEmailNotifications'
 
 // Import the MeetingState type from the store
 import type { MeetingState } from '@/store/meetingStore'
@@ -21,6 +21,9 @@ interface TaskCardProps {
   onStatusToggle: () => void;
   onEdit: () => void;
   onDelete: () => void;
+  onSendReminder?: () => void;
+  needsReminder?: boolean;
+  sendingReminder?: boolean;
 }
 
 export function TaskManager() {
@@ -30,11 +33,91 @@ export function TaskManager() {
   const updateTask = useMeetingStore((state: MeetingState) => state.updateTask)
   const removeTask = useMeetingStore((state: MeetingState) => state.removeTask)
 
+  // Email notifications hook
+  const {
+    settings: emailSettings,
+    isConfigured: isEmailConfigured,
+    sendTaskReminder,
+    sendTaskAssignment,
+    sendTaskCompletion,
+    checkReminders,
+    getTasksNeedingReminders,
+    cleanupReminderData
+  } = useEmailNotifications()
+
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [editingTask, setEditingTask] = useState<Task | null>(null)
   const [filterTag, setFilterTag] = useState<string | null>(null)
   const [sortBy, setSortBy] = useState<'priority' | 'dueDate' | 'created'>('created')
   const [view, setView] = useState<'kanban' | 'today' | 'upcoming' | 'all'>('kanban')
+  const [sendingReminder, setSendingReminder] = useState<string | null>(null)
+
+  // Check for reminders periodically
+  useEffect(() => {
+    if (isEmailConfigured && emailSettings.enabled && emailSettings.remindersEnabled) {
+      checkReminders(tasks)
+      
+      // Set up periodic reminder checking (every hour)
+      const interval = setInterval(() => {
+        checkReminders(tasks)
+      }, 60 * 60 * 1000) // 1 hour
+      
+      return () => clearInterval(interval)
+    }
+  }, [tasks, isEmailConfigured, emailSettings.enabled, emailSettings.remindersEnabled, checkReminders])
+
+  // Clean up reminder tracking data when tasks change
+  useEffect(() => {
+    const taskIds = tasks.map(t => t.id)
+    cleanupReminderData(taskIds)
+  }, [tasks, cleanupReminderData])
+
+  // Get tasks that need reminders for UI indication
+  const tasksNeedingReminders = getTasksNeedingReminders(tasks)
+
+  // Handle manual reminder sending
+  const handleSendReminder = async (task: Task) => {
+    if (!task.assignee && !emailSettings.userEmail) {
+      const event = new CustomEvent('toast', {
+        detail: {
+          title: 'No email address',
+          description: 'Task has no assignee and no default email is configured.',
+          variant: 'destructive'
+        }
+      })
+      window.dispatchEvent(event)
+      return
+    }
+
+    setSendingReminder(task.id)
+    
+    try {
+      const success = await sendTaskReminder(task, task.assignee || emailSettings.userEmail)
+      
+      const event = new CustomEvent('toast', {
+        detail: {
+          title: success ? 'Reminder sent' : 'Failed to send reminder',
+          description: success 
+            ? `Reminder sent for "${task.title}"` 
+            : 'Failed to send reminder. Please check your email configuration.',
+          variant: success ? 'success' : 'destructive'
+        }
+      })
+      window.dispatchEvent(event)
+    } catch (error) {
+      console.error('Error sending reminder:', error)
+      const event = new CustomEvent('toast', {
+        detail: {
+          title: 'Error sending reminder',
+          description: 'An error occurred while sending the reminder.',
+          variant: 'destructive'
+        }
+      })
+      window.dispatchEvent(event)
+    } finally {
+      setSendingReminder(null)
+    }
+  }
 
   // Group tasks by status
   const todoTasks = tasks.filter(task => task.status === 'Todo')
@@ -101,15 +184,30 @@ export function TaskManager() {
   const allTags = Array.from(new Set(tasks.flatMap(task => task.tags)))
 
   // Handle creating a new task
-  const handleCreateTask = (task: Omit<Task, 'id' | 'created'>) => {
-    addTask(task)
+  const handleCreateTask = async (task: Omit<Task, 'id' | 'created'>) => {
+    const taskId = addTask(task)
     setIsDialogOpen(false)
+
+    // Send assignment notification if task has an assignee and email notifications are enabled
+    if (task.assignee && isEmailConfigured && emailSettings.enabled) {
+      try {
+        await sendTaskAssignment(
+          { ...task, id: taskId, created: new Date().toISOString() } as Task,
+          task.assignee,
+          emailSettings.userEmail || 'MeetingFlow User'
+        )
+      } catch (error) {
+        console.error('Failed to send task assignment email:', error)
+      }
+    }
 
     // Show success toast
     const event = new CustomEvent('toast', {
       detail: {
         title: 'Task created',
-        description: 'Your task has been created successfully.',
+        description: task.assignee && isEmailConfigured && emailSettings.enabled
+          ? 'Task created and assignment notification sent.'
+          : 'Your task has been created successfully.',
         variant: 'success'
       }
     })
@@ -117,16 +215,35 @@ export function TaskManager() {
   }
 
   // Handle updating an existing task
-  const handleUpdateTask = (id: string, updates: Partial<Omit<Task, 'id'>>) => {
+  const handleUpdateTask = async (id: string, updates: Partial<Omit<Task, 'id'>>) => {
+    const originalTask = tasks.find(t => t.id === id)
     updateTask(id, updates)
     setEditingTask(null)
     setIsDialogOpen(false)
+
+    // Send assignment notification if assignee changed and email notifications are enabled
+    if (originalTask && updates.assignee && updates.assignee !== originalTask.assignee && 
+        isEmailConfigured && emailSettings.enabled) {
+      try {
+        const updatedTask = { ...originalTask, ...updates } as Task
+        await sendTaskAssignment(
+          updatedTask,
+          updates.assignee,
+          emailSettings.userEmail || 'MeetingFlow User'
+        )
+      } catch (error) {
+        console.error('Failed to send task assignment email:', error)
+      }
+    }
 
     // Show success toast
     const event = new CustomEvent('toast', {
       detail: {
         title: 'Task updated',
-        description: 'Your task has been updated successfully.',
+        description: updates.assignee && updates.assignee !== originalTask?.assignee && 
+                    isEmailConfigured && emailSettings.enabled
+          ? 'Task updated and assignment notification sent.'
+          : 'Your task has been updated successfully.',
         variant: 'success'
       }
     })
@@ -134,13 +251,32 @@ export function TaskManager() {
   }
 
   // Handle task status change via drag and drop
-  const handleStatusChange = (taskId: string, newStatus: 'Todo' | 'In Progress' | 'Done') => {
+  const handleStatusChange = async (taskId: string, newStatus: 'Todo' | 'In Progress' | 'Done') => {
+    const task = tasks.find(t => t.id === taskId)
     updateTask(taskId, { status: newStatus })
 
-    // If task is marked as done, show confetti
+    // If task is marked as done, show confetti and send completion notification
     if (newStatus === 'Done') {
       const event = new CustomEvent('confetti')
       window.dispatchEvent(event)
+
+      // Send completion notification if email notifications are enabled
+      if (task && isEmailConfigured && emailSettings.enabled && emailSettings.userEmail) {
+        try {
+          const recipients = [emailSettings.userEmail]
+          if (task.assignee && task.assignee !== emailSettings.userEmail) {
+            recipients.push(task.assignee)
+          }
+          
+          await sendTaskCompletion(
+            { ...task, status: newStatus },
+            recipients,
+            emailSettings.userEmail
+          )
+        } catch (error) {
+          console.error('Failed to send task completion email:', error)
+        }
+      }
     }
   }
 
@@ -215,6 +351,9 @@ export function TaskManager() {
                   }}
                   onEdit={() => handleEditTask(task)}
                   onDelete={() => handleDeleteTask(task.id)}
+                  onSendReminder={() => handleSendReminder(task)}
+                  needsReminder={tasksNeedingReminders.some(t => t.id === task.id)}
+                  sendingReminder={sendingReminder === task.id}
                 />
               ))}
             </div>
@@ -241,7 +380,7 @@ export function TaskManager() {
   }
 
   // Simple task card for list views
-  function TaskCard({ task, onStatusToggle, onEdit, onDelete }: TaskCardProps) {
+  function TaskCard({ task, onStatusToggle, onEdit, onDelete, onSendReminder, needsReminder, sendingReminder }: TaskCardProps) {
     const dueDate = task.dueDate
       ? format(new Date(task.dueDate), 'MMM d')
       : null
@@ -258,8 +397,15 @@ export function TaskManager() {
       'Done': 'border-green-500 bg-green-50'
     }[task.status]
 
+    // Check if task is overdue
+    const isOverdue = task.dueDate && new Date(task.dueDate) < new Date() && task.status !== 'Done'
+
     return (
-      <Card className={cn("border-l-4", statusColor)}>
+      <Card className={cn(
+        "border-l-4", 
+        statusColor,
+        needsReminder && "ring-2 ring-orange-200 ring-offset-1"
+      )}>
         <CardContent className="p-3">
           <div className="flex items-center gap-3">
             <button
@@ -286,6 +432,11 @@ export function TaskManager() {
                 )}>
                   {task.title}
                 </h3>
+                {needsReminder && (
+                  <Badge variant="outline" className="text-xs bg-orange-50 text-orange-700 border-orange-200">
+                    {isOverdue ? 'Overdue' : 'Due Soon'}
+                  </Badge>
+                )}
               </div>
 
               {task.description && (
@@ -304,7 +455,12 @@ export function TaskManager() {
               )}
 
               {dueDate && (
-                <span className="text-xs text-muted-foreground">{dueDate}</span>
+                <span className={cn(
+                  "text-xs",
+                  isOverdue ? "text-red-600 font-medium" : "text-muted-foreground"
+                )}>
+                  {dueDate}
+                </span>
               )}
 
               {task.assignee && (
@@ -314,6 +470,24 @@ export function TaskManager() {
               )}
 
               <div className="flex gap-1">
+                {/* Reminder button */}
+                {onSendReminder && isEmailConfigured && emailSettings.enabled && (task.assignee || emailSettings.userEmail) && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7"
+                    onClick={onSendReminder}
+                    disabled={sendingReminder}
+                    title="Send reminder email"
+                  >
+                    <span className="sr-only">Send reminder</span>
+                    {sendingReminder ? (
+                      <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                    ) : (
+                      <Mail className="h-3.5 w-3.5" />
+                    )}
+                  </Button>
+                )}
                 <Button
                   variant="ghost"
                   size="icon"
@@ -352,18 +526,45 @@ export function TaskManager() {
           <Badge variant="secondary" className="rounded-full">
             {tasks.length}
           </Badge>
+          {tasksNeedingReminders.length > 0 && (
+            <Badge variant="outline" className="rounded-full bg-orange-50 text-orange-700 border-orange-200">
+              <Mail className="h-3 w-3 mr-1" />
+              {tasksNeedingReminders.length} need{tasksNeedingReminders.length === 1 ? 's' : ''} reminder
+            </Badge>
+          )}
         </div>
-        <Button
-          size="sm"
-          onClick={() => {
-            setEditingTask(null)
-            setIsDialogOpen(true)
-          }}
-          className="gap-1.5"
-        >
-          <Plus className="h-4 w-4" />
-          New Task
-        </Button>
+        <div className="flex gap-2">
+          {isEmailConfigured && emailSettings.enabled && tasksNeedingReminders.length > 0 && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={async () => {
+                // Send reminders for all tasks that need them
+                for (const task of tasksNeedingReminders) {
+                  if (task.assignee || emailSettings.userEmail) {
+                    await handleSendReminder(task)
+                  }
+                }
+              }}
+              className="gap-1.5"
+              disabled={sendingReminder !== null}
+            >
+              <Send className="h-4 w-4" />
+              Send All Reminders
+            </Button>
+          )}
+          <Button
+            size="sm"
+            onClick={() => {
+              setEditingTask(null)
+              setIsDialogOpen(true)
+            }}
+            className="gap-1.5"
+          >
+            <Plus className="h-4 w-4" />
+            New Task
+          </Button>
+        </div>
       </div>
 
       {/* View selector */}
