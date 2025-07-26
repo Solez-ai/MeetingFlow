@@ -20,7 +20,7 @@ export function useVoiceCommands() {
     {
       pattern: /^add topic (.+)$/i,
       action: (matches) => {
-        const title = matches[1].trim()
+        const title = matches[1]?.trim() || ''
         addAgendaItem({
           title,
           duration: 10, // Default 10 minutes
@@ -45,7 +45,7 @@ export function useVoiceCommands() {
     {
       pattern: /^(?:mark action item|create task|add task) (.+)$/i,
       action: (matches) => {
-        const title = matches[1].trim()
+        const title = matches[1]?.trim() || ''
         addTask({
           title,
           description: 'Created via voice command',

@@ -39,9 +39,6 @@ export function Dashboard() {
 
   // Calculate dashboard stats
   const totalMeetings = meetings.length
-  // const recentMeetings = meetings
-    .sort((a, b) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime())
-    .slice(0, 3)
 
   // Calculate total tasks across all meetings
   const totalTasks = meetings.reduce((acc, meeting) => {

@@ -95,7 +95,7 @@ export const useMeetingStore = create<MeetingState>((set, get) => ({
     })
   },
   
-  createMeeting: (title, duration) => {
+  createMeeting: (title) => {
     const newMeeting: Meeting = {
       id: uuidv4(),
       title,

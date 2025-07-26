@@ -167,7 +167,7 @@ export class WebRTCService {
 
     this.peers.set(peerId, peer)
 
-    peer.on('signal', (data) => {
+    peer.on('signal', (data: any) => {
       const messageType = data.type === 'offer' ? 'offer' : 
                          data.type === 'answer' ? 'answer' : 'ice-candidate'
       
@@ -188,7 +188,7 @@ export class WebRTCService {
       }
     })
 
-    peer.on('data', (data) => {
+    peer.on('data', (data: any) => {
       try {
         const message: CollaborationMessage = JSON.parse(data.toString())
         const handler = this.messageHandlers.get(message.type)
@@ -205,7 +205,7 @@ export class WebRTCService {
       this.removePeer(peerId)
     })
 
-    peer.on('error', (error) => {
+    peer.on('error', (error: any) => {
       console.error(`Peer ${peerId} error:`, error)
       this.removePeer(peerId)
     })
@@ -250,7 +250,7 @@ export class WebRTCService {
   }
 
   private disconnectAllPeers(): void {
-    this.peers.forEach((peer, peerId) => {
+    this.peers.forEach((peer) => {
       peer.destroy()
     })
     this.peers.clear()

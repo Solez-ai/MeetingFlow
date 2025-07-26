@@ -36,7 +36,7 @@ export function VoiceCommandProvider({ children }: VoiceCommandProviderProps) {
   } = useVoiceRecognition({
     continuous: false,
     interimResults: false,
-    onResult: (transcript, confidence) => {
+    onResult: (transcript: string) => {
       if (!settings.voiceCommandsEnabled) return
 
       setLastCommand(transcript)

@@ -1,17 +1,15 @@
 import { useCallback, useEffect, useState } from 'react'
-import { useEditor, EditorContent, Editor } from '@tiptap/react'
+import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Highlight from '@tiptap/extension-highlight'
 import TaskList from '@tiptap/extension-task-list'
 import TaskItem from '@tiptap/extension-task-item'
 import Placeholder from '@tiptap/extension-placeholder'
-import CodeBlock from '@tiptap/extension-code-block'
 import { createLowlight } from 'lowlight'
 
 const lowlight = createLowlight()
 import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight'
 import { useMeetingStore } from '@/store/meetingStore'
-import { NoteBlock } from '@/types'
 import { htmlToNoteBlocks, noteBlocksToHtml } from '@/utils/editorUtils'
 import { debounce } from '@/lib/utils'
 import { extractTasksFromNotes } from '@/utils/taskExtractor'
@@ -21,11 +19,10 @@ export function useNotesEditor() {
   const addNoteBlock = useMeetingStore(state => state.addNoteBlock)
   const updateNoteBlock = useMeetingStore(state => state.updateNoteBlock)
   const saveMeetingToStorage = useMeetingStore(state => state.saveMeetingToStorage)
-  const addTask = useMeetingStore(state => state.addTask)
   
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
   const [selectedText, setSelectedText] = useState<string>('')
-  const [potentialTasks, setPotentialTasks] = useState<string[]>([])
+  const [potentialTasks, setPotentialTasks] = useState<Array<{title: string; description?: string; tags: string[]; priority: 'Low' | 'Medium' | 'High'}>>([])
   const [isSaving, setIsSaving] = useState(false)
   
   // Create a debounced save function to prevent excessive saves
@@ -51,7 +48,8 @@ export function useNotesEditor() {
           // Add any new blocks
           if (noteBlocks.length > currentMeeting.notes.length) {
             for (let i = currentMeeting.notes.length; i < noteBlocks.length; i++) {
-              addNoteBlock(noteBlocks[i])
+              const block = noteBlocks[i]
+              if (block) addNoteBlock(block)
             }
           }
         } else {
@@ -97,29 +95,7 @@ export function useNotesEditor() {
         nested: true,
         HTMLAttributes: {
           class: 'task-item',
-        },
-        onChecked: (node, checked) => {
-          // When a task item is checked, create a task in the task manager
-          if (checked && node.textContent) {
-            addTask({
-              title: node.textContent,
-              priority: 'Medium',
-              status: 'Done', // Since it's already checked
-              tags: ['notes', 'auto-extracted'],
-              createdFrom: 'notes',
-            })
-            
-            // Show success toast
-            const event = new CustomEvent('toast', {
-              detail: {
-                title: 'Task created',
-                description: 'Task automatically created from checked item',
-                variant: 'success'
-              }
-            })
-            window.dispatchEvent(event)
-          }
-        },
+        }
       }),
       Placeholder.configure({
         placeholder: 'Start typing your notes here...',
@@ -236,7 +212,7 @@ export function useNotesEditor() {
     
     if (taskId) {
       // Remove from potential tasks
-      setPotentialTasks(prev => prev.filter(t => t !== text))
+      setPotentialTasks(prev => prev.filter(t => t.title !== text))
       
       // Show success toast
       const event = new CustomEvent('toast', {
@@ -276,7 +252,8 @@ export function useNotesEditor() {
         // Add any new blocks
         if (noteBlocks.length > currentMeeting.notes.length) {
           for (let i = currentMeeting.notes.length; i < noteBlocks.length; i++) {
-            addNoteBlock(noteBlocks[i])
+            const block = noteBlocks[i]
+            if (block) addNoteBlock(block)
           }
         }
       } else {

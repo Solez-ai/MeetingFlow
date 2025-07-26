@@ -1,11 +1,10 @@
 import { Card, CardContent } from '../ui/card'
 import { Button } from '../ui/button'
-import { Edit, Trash2, Calendar, Tag, User, Clock } from 'lucide-react'
+import { Edit, Trash2, Calendar, User, Clock } from 'lucide-react'
 import { Task } from '@/types'
 import { cn } from '@/lib/utils'
 import { format } from 'date-fns'
 import { Badge } from '../ui/badge'
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip'
 
 
 interface TaskCardProps {

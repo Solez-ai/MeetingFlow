@@ -32,7 +32,7 @@ interface ConfettiParticle {
  * Create a confetti particle
  */
 function createParticle(x: number, y: number): ConfettiParticle {
-  const color = CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)]
+  const color = CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)] || '#4f46e5'
   
   return {
     x,
@@ -112,7 +112,7 @@ export function showConfetti(
   // Animation function
   function animate() {
     // Clear canvas
-    ctx.clearRect(0, 0, canvas.width, canvas.height)
+    if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height)
     
     // Update and draw particles
     let allDead = true
@@ -139,16 +139,18 @@ export function showConfetti(
         allDead = false
         
         // Draw particle
-        ctx.save()
-        ctx.translate(particle.x, particle.y)
-        ctx.rotate(particle.rotation * Math.PI / 180)
-        ctx.globalAlpha = particle.opacity
-        ctx.fillStyle = particle.color
-        
-        // Draw a rectangle for confetti
-        ctx.fillRect(-particle.radius, -particle.radius / 2, particle.radius * 2, particle.radius)
-        
-        ctx.restore()
+        if (ctx) {
+          ctx.save()
+          ctx.translate(particle.x, particle.y)
+          ctx.rotate(particle.rotation * Math.PI / 180)
+          ctx.globalAlpha = particle.opacity
+          ctx.fillStyle = particle.color
+          
+          // Draw a rectangle for confetti
+          ctx.fillRect(-particle.radius, -particle.radius / 2, particle.radius * 2, particle.radius)
+          
+          ctx.restore()
+        }
       }
     })
     

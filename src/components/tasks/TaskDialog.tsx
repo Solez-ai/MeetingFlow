@@ -164,7 +164,7 @@ export function TaskDialog({
               <Label>Priority</Label>
               <RadioGroup 
                 value={priority} 
-                onValueChange={(value) => setPriority(value as 'Low' | 'Medium' | 'High')}
+                onValueChange={(value: string) => setPriority(value as 'Low' | 'Medium' | 'High')}
                 className="flex flex-col space-y-1"
               >
                 <div className="flex items-center space-x-2">
@@ -195,7 +195,7 @@ export function TaskDialog({
               <Label>Status</Label>
               <RadioGroup 
                 value={status} 
-                onValueChange={(value) => setStatus(value as 'Todo' | 'In Progress' | 'Done')}
+                onValueChange={(value: string) => setStatus(value as 'Todo' | 'In Progress' | 'Done')}
                 className="flex flex-col space-y-1"
               >
                 <div className="flex items-center space-x-2">

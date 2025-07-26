@@ -10,6 +10,7 @@ import { ActionItemsPage } from '@/components/transcription/ActionItemsPage'
 import { VoiceCommandProvider } from '@/components/voice/VoiceCommandProvider'
 import { useMeetingStore } from '@/store/meetingStore'
 import type { MeetingState } from '@/store/meetingStore'
+import { useShareableLink } from '@/hooks/useShareableLink'
 import { Toaster } from '@/components/ui/toaster'
 import { initConfetti } from '@/utils/confetti'
 import { ApiKeyProvider } from '@/components/transcription/ApiKeyProvider'
@@ -47,6 +48,9 @@ const router = createBrowserRouter([
 
 function App() {
   const initializeMeetings = useMeetingStore((state: MeetingState) => state.initializeMeetings)
+  
+  // Handle shareable links
+  useShareableLink()
   
   useEffect(() => {
     // Initialize meetings from localStorage on app start

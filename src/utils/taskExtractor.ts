@@ -35,7 +35,7 @@ export function extractPotentialTags(text: string): string[] {
   const hashtagRegex = /#(\w+)/g;
   let match;
   while ((match = hashtagRegex.exec(text)) !== null) {
-    tags.push(match[1]);
+    if (match[1]) tags.push(match[1]);
   }
   
   // Extract common project indicators

@@ -200,14 +200,14 @@ export function NotesEditor() {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="flex items-center justify-between bg-background p-2 rounded-md"
+                        className="flex items-center justify-between bg-card p-2 rounded-md"
                       >
-                        <p className="text-sm">{task}</p>
+                        <p className="text-sm">{task.title}</p>
                         <Button 
                           size="sm" 
                           variant="outline"
                           className="text-xs"
-                          onClick={() => createTaskFromSuggestion(task)}
+                          onClick={() => createTaskFromSuggestion(task.title)}
                         >
                           Add as Task
                         </Button>

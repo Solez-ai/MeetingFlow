@@ -6,7 +6,7 @@ import { extractTasksFromNotes } from './taskExtractor'
 /**
  * Extract tasks from editor content
  */
-export function extractTasksFromEditor(editor: Editor): string[] {
+export function extractTasksFromEditor(editor: Editor): Array<{title: string; description?: string; tags: string[]; priority: 'Low' | 'Medium' | 'High'}> {
   if (!editor) return []
   
   const content = editor.getHTML()
@@ -95,7 +95,7 @@ export function convertTaskListItemsToTasks(
   const taskIds: string[] = []
   
   // Find all checked task items
-  const checkedItems = editor.state.doc.descendants((node, pos) => {
+  editor.state.doc.descendants((node, _pos) => {
     if (node.type.name === 'taskItem' && node.attrs.checked) {
       // Get the text content of the task item
       const text = node.textContent

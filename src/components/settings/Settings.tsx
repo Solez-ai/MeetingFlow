@@ -3,12 +3,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui
 import { Button } from '../ui/button'
 import { VoiceCommands } from '../voice/VoiceCommands'
 import { VoiceCommandTest } from '../voice/VoiceCommandTest'
-import { useAppStore } from '@/store'
 import { useState } from 'react'
 
 export function Settings() {
   const { theme, setTheme } = useTheme()
-  const { settings } = useAppStore()
   const [showVoiceTest, setShowVoiceTest] = useState(false)
   
   return (

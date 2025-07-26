@@ -17,7 +17,6 @@ export const CollaborationProvider: React.FC<CollaborationProviderProps> = ({ ch
     isConnected, 
     broadcastNotesUpdate, 
     setNotesUpdateHandler,
-    requestSync,
     sendSyncResponse
   } = useCollaborationStore()
 
@@ -49,10 +48,10 @@ export const CollaborationProvider: React.FC<CollaborationProviderProps> = ({ ch
   useEffect(() => {
     const { webrtcService } = useCollaborationStore.getState()
     if (webrtcService && currentMeeting) {
-      webrtcService.onMessage('sync-request', (message, peerId) => {
+      webrtcService.onMessage('sync-request', (_message, _peerId) => {
         // Send current notes to the requesting peer
         if (currentMeeting.notes) {
-          sendSyncResponse(peerId, currentMeeting.notes)
+          sendSyncResponse(_peerId, currentMeeting.notes)
         }
       })
     }

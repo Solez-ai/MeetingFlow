@@ -47,8 +47,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         {toasts.map((toast) => (
           <Toast 
             key={toast.id} 
-            variant={toast.variant} 
-            onClose={() => removeToast(toast.id)}
+            variant={toast.variant}
           >
             {toast.title && <ToastTitle>{toast.title}</ToastTitle>}
             <ToastDescription>{toast.description}</ToastDescription>

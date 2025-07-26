@@ -7,6 +7,7 @@ import { TaskManager } from '../tasks/TaskManager'
 import { TranscriptionPage } from '../transcription/TranscriptionPage'
 import { VoiceCommandButton } from '../voice/VoiceCommandButton'
 import { CollaborationProvider, CollaborationButton } from '../collaboration'
+import { ExportDialog } from '../export'
 import { useVoiceKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts'
 import { useMeetingStore } from '@/store/meetingStore'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../ui/tabs'
@@ -51,8 +52,13 @@ export function MeetingWorkspace() {
             </p>
           </div>
           
-          {/* Collaboration Button */}
-          <CollaborationButton />
+          <div className="flex items-center gap-2">
+            {/* Export Button */}
+            {currentMeeting && <ExportDialog meeting={currentMeeting} />}
+            
+            {/* Collaboration Button */}
+            <CollaborationButton />
+          </div>
         </div>
         
         {/* Floating Voice Command Button */}

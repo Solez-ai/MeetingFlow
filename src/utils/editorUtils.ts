@@ -1,5 +1,4 @@
 import { NoteBlock } from '@/types'
-import { generateId } from '@/lib/utils'
 
 /**
  * Converts HTML content from TipTap editor to NoteBlock array
@@ -77,13 +76,9 @@ export function extractTextFromHtml(html: string): string {
 export function tipTapToMarkdown(content: any): string {
   if (!content) return ''
   
-  let markdown = ''
-  
   // Process content recursively
   const processNode = (node: any, level = 0): string => {
     if (!node) return ''
-    
-    let result = ''
     
     switch (node.type) {
       case 'doc':
@@ -121,7 +116,7 @@ export function tipTapToMarkdown(content: any): string {
         
       case 'blockquote':
         const quoteContent = node.content?.map((child: any) => processNode(child)).join('\n') || ''
-        return quoteContent.split('\n').map(line => `> ${line}`).join('\n')
+        return quoteContent.split('\n').map((line: string) => `> ${line}`).join('\n')
         
       case 'codeBlock':
         const code = node.content?.map((child: any) => processNode(child)).join('\n') || ''
@@ -199,7 +194,8 @@ export function exportNotesToMarkdown(notes: NoteBlock[]): string {
       case 'todo':
         const todoItems = Array.from(element.querySelectorAll('li'))
         todoItems.forEach(item => {
-          const isChecked = item.querySelector('input[type="checkbox"]')?.checked
+          const checkbox = item.querySelector('input[type="checkbox"]') as HTMLInputElement
+          const isChecked = checkbox?.checked
           markdown += `- [${isChecked ? 'x' : ' '}] ${item.textContent?.replace(/^\s*/, '') || ''}\n`
         })
         markdown += '\n'

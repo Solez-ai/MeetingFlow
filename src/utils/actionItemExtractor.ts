@@ -98,7 +98,7 @@ export function analyzeActionItem(text: string): {
     if (match) {
       confidence += 0.4;
       // Extract the action text from the appropriate capture group
-      actionText = match[match.length - 1].trim();
+      actionText = match[match.length - 1]?.trim();
       break;
     }
   }
@@ -109,14 +109,15 @@ export function analyzeActionItem(text: string): {
     if (match) {
       confidence += 0.3;
       // Extract potential due date
-      const rawDate = match[2].trim();
+      const rawDate = match[2]?.trim();
       
       // Try to parse the date more intelligently
-      try {
-        let parsedDate: Date | null = null;
-        
-        // Handle relative dates
-        if (/tomorrow/i.test(rawDate)) {
+      if (rawDate) {
+        try {
+          let parsedDate: Date | null = null;
+          
+          // Handle relative dates
+          if (/tomorrow/i.test(rawDate)) {
           parsedDate = new Date();
           parsedDate.setDate(parsedDate.getDate() + 1);
         } 
@@ -165,9 +166,10 @@ export function analyzeActionItem(text: string): {
           // Fallback to showing the raw text
           dueDate = rawDate;
         }
-      } catch (e) {
-        // If date parsing fails, just use the raw text
-        dueDate = rawDate;
+        } catch (e) {
+          // If date parsing fails, just use the raw text
+          dueDate = rawDate;
+        }
       }
       
       break;
@@ -179,7 +181,7 @@ export function analyzeActionItem(text: string): {
     const match = text.match(pattern);
     if (match) {
       // The first capture group should be the assignee name
-      assignee = match[1].trim();
+      assignee = match[1]?.trim();
       confidence += 0.2;
       break;
     }
@@ -234,7 +236,7 @@ export function extractTags(text: string): string[] {
   const hashtagRegex = /#(\w+)/g;
   let match;
   while ((match = hashtagRegex.exec(text)) !== null) {
-    tags.push(match[1]);
+    if (match[1]) tags.push(match[1]);
   }
   
   // Extract common project indicators

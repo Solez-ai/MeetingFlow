@@ -10,14 +10,10 @@ export class SignalingService {
   private ws: WebSocket | null = null
   private messageHandlers: Map<string, (message: SignalingMessage) => void> = new Map()
   private isConnected = false
-  private reconnectAttempts = 0
-  private maxReconnectAttempts = 5
-  private reconnectDelay = 1000
 
   // For demo purposes, we'll use a simple in-memory store
   // In production, this would be handled by a WebSocket server
   private static rooms: Map<string, Set<string>> = new Map()
-  private static messageQueue: Map<string, SignalingMessage[]> = new Map()
 
   constructor(private peerId: string) {}
 
@@ -26,7 +22,6 @@ export class SignalingService {
     // In production, you would connect to a real signaling server
     return new Promise((resolve) => {
       this.isConnected = true
-      this.reconnectAttempts = 0
       resolve()
     })
   }

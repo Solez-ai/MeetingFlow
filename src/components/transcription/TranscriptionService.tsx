@@ -19,7 +19,6 @@ export function TranscriptionService() {
   const [error, setError] = useState<string | null>(null)
   
   const {
-    assemblyApiKey,
     isTranscribing,
     setAssemblyApiKey,
     startTranscription,
@@ -94,7 +93,7 @@ export function TranscriptionService() {
   // Handle file selection
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-      setSelectedFile(e.target.files[0])
+      setSelectedFile(e.target.files[0] || null)
     }
   }
   
@@ -121,7 +120,7 @@ export function TranscriptionService() {
         
         // Update progress
         if (transcriptStatus.status === 'processing') {
-          setUploadProgress(transcriptStatus.percent_complete || 0)
+          setUploadProgress((transcriptStatus as any).percent_complete || 0)
         }
         
         // Check if completed

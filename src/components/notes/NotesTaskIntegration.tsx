@@ -11,7 +11,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 
 export function NotesTaskIntegration() {
   const currentMeeting = useMeetingStore(state => state.currentMeeting)
-  const [potentialTasks, setPotentialTasks] = useState<string[]>([])
+  const [potentialTasks, setPotentialTasks] = useState<Array<{title: string; description?: string; tags: string[]; priority: 'Low' | 'Medium' | 'High'}>>([])
   const [showTaskList, setShowTaskList] = useState(false)
   
   // Extract potential tasks from notes when they change
@@ -28,13 +28,13 @@ export function NotesTaskIntegration() {
     
     // Filter out tasks that are already in the task list
     const existingTaskTitles = new Set(currentMeeting.tasks.map(task => task.title.toLowerCase()))
-    const newTasks = tasks.filter(task => !existingTaskTitles.has(task.toLowerCase()))
+    const newTasks = tasks.filter(task => !existingTaskTitles.has(task.title.toLowerCase()))
     
     setPotentialTasks(newTasks)
   }, [currentMeeting?.notes, currentMeeting?.tasks])
   
   // Filter tasks created from notes
-  const notesTaskFilter = (task) => task.createdFrom === 'notes'
+  const notesTaskFilter = (task: any) => task.createdFrom === 'notes'
   
   if (!currentMeeting) {
     return null
@@ -93,9 +93,9 @@ export function NotesTaskIntegration() {
                   key={index}
                   className="flex items-center justify-between bg-muted/50 p-2 rounded-md"
                 >
-                  <p className="text-sm line-clamp-1 flex-1">{task}</p>
+                  <p className="text-sm line-clamp-1 flex-1">{task.title}</p>
                   <TaskExtractor 
-                    text={task} 
+                    text={task.title} 
                     source="notes" 
                     suggestedTags={['auto-detected']}
                     onExtracted={() => {

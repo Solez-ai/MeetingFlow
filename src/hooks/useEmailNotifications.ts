@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Task, Meeting } from '@/types'
 import { EmailService } from '@/services/email'
-import { reminderScheduler, ReminderScheduler } from '@/utils/reminderScheduler'
+import { reminderScheduler } from '@/utils/reminderScheduler'
 
 /**
  * Email notification settings interface

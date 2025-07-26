@@ -62,7 +62,7 @@ export const useCollaborationStore = create<CollaborationStore>((set, get) => ({
       await webrtcService.initialize()
       
       // Set up message handlers
-      webrtcService.onMessage('notes-update', (message: CollaborationMessage, peerId: string) => {
+      webrtcService.onMessage('notes-update', (message: CollaborationMessage) => {
         get().handleNotesUpdate(message as NotesUpdateMessage)
       })
       
@@ -71,12 +71,12 @@ export const useCollaborationStore = create<CollaborationStore>((set, get) => ({
         get().updatePeerCursor(peerId, cursorMessage.data)
       })
       
-      webrtcService.onMessage('sync-request', (message: CollaborationMessage, peerId: string) => {
+      webrtcService.onMessage('sync-request', () => {
         // Handle sync request - would need to get current notes from meeting store
         // This would be implemented when integrating with the notes editor
       })
       
-      webrtcService.onMessage('sync-response', (message: CollaborationMessage, peerId: string) => {
+      webrtcService.onMessage('sync-response', (message: CollaborationMessage) => {
         const syncMessage = message as SyncMessage
         const handler = get().onNotesUpdate
         if (handler && syncMessage.data.notes) {
