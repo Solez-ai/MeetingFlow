@@ -172,60 +172,60 @@ export function Dashboard() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
         <Card className="border-0 shadow-md bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950/50 dark:to-blue-900/50 transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
-          <CardContent className="p-6">
+          <CardContent className="p-3 sm:p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-blue-600 dark:text-blue-400">Total Meetings</p>
-                <p className="text-3xl font-bold text-blue-900 dark:text-blue-100">{totalMeetings}</p>
+                <p className="text-xs sm:text-sm font-medium text-blue-600 dark:text-blue-400">Total Meetings</p>
+                <p className="text-xl sm:text-3xl font-bold text-blue-900 dark:text-blue-100">{totalMeetings}</p>
               </div>
-              <div className="h-12 w-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center shadow-md">
-                <CalendarIcon className="h-6 w-6 text-white" />
+              <div className="h-8 w-8 sm:h-12 sm:w-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center shadow-md">
+                <CalendarIcon className="h-4 w-4 sm:h-6 sm:w-6 text-white" />
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card className="border-0 shadow-md bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950/50 dark:to-green-900/50 transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
-          <CardContent className="p-6">
+          <CardContent className="p-3 sm:p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-green-600 dark:text-green-400">Total Tasks</p>
-                <p className="text-3xl font-bold text-green-900 dark:text-green-100">{totalTasks}</p>
+                <p className="text-xs sm:text-sm font-medium text-green-600 dark:text-green-400">Total Tasks</p>
+                <p className="text-xl sm:text-3xl font-bold text-green-900 dark:text-green-100">{totalTasks}</p>
               </div>
-              <div className="h-12 w-12 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center shadow-md">
-                <CheckSquareIcon className="h-6 w-6 text-white" />
+              <div className="h-8 w-8 sm:h-12 sm:w-12 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center shadow-md">
+                <CheckSquareIcon className="h-4 w-4 sm:h-6 sm:w-6 text-white" />
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card className="border-0 shadow-md bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-950/50 dark:to-orange-900/50 transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
-          <CardContent className="p-6">
+          <CardContent className="p-3 sm:p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-orange-600 dark:text-orange-400">Pending Tasks</p>
-                <p className="text-3xl font-bold text-orange-900 dark:text-orange-100">{pendingTasks}</p>
+                <p className="text-xs sm:text-sm font-medium text-orange-600 dark:text-orange-400">Pending Tasks</p>
+                <p className="text-xl sm:text-3xl font-bold text-orange-900 dark:text-orange-100">{pendingTasks}</p>
               </div>
-              <div className="h-12 w-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg flex items-center justify-center shadow-md">
-                <ClockIcon className="h-6 w-6 text-white" />
+              <div className="h-8 w-8 sm:h-12 sm:w-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg flex items-center justify-center shadow-md">
+                <ClockIcon className="h-4 w-4 sm:h-6 sm:w-6 text-white" />
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card className="border-0 shadow-md bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-950/50 dark:to-purple-900/50 transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
-          <CardContent className="p-6">
+          <CardContent className="p-3 sm:p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-purple-600 dark:text-purple-400">Productivity</p>
-                <p className="text-3xl font-bold text-purple-900 dark:text-purple-100">
+                <p className="text-xs sm:text-sm font-medium text-purple-600 dark:text-purple-400">Productivity</p>
+                <p className="text-xl sm:text-3xl font-bold text-purple-900 dark:text-purple-100">
                   {totalTasks > 0 ? Math.round(((totalTasks - pendingTasks) / totalTasks) * 100) : 0}%
                 </p>
               </div>
-              <div className="h-12 w-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center shadow-md">
-                <TrendingUpIcon className="h-6 w-6 text-white" />
+              <div className="h-8 w-8 sm:h-12 sm:w-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center shadow-md">
+                <TrendingUpIcon className="h-4 w-4 sm:h-6 sm:w-6 text-white" />
               </div>
             </div>
           </CardContent>

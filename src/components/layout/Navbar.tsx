@@ -210,13 +210,13 @@ export function Navbar() {
 
         {/* Mobile Navigation Menu */}
         {isMobileMenuOpen && (
-          <div className="lg:hidden mt-4 pb-4 border-t border-border pt-4 animate-in slide-in-from-top duration-300">
-            <nav className="flex flex-col gap-2">
+          <div className="lg:hidden mt-4 pb-4 border-t border-border pt-4 animate-in slide-in-from-top duration-300 safe-bottom">
+            <nav className="flex flex-col gap-2 touch-spacing">
               <Link to="/" onClick={closeMobileMenu}>
                 <Button 
                   variant={isActive('/') ? 'secondary' : 'ghost'} 
                   size="sm"
-                  className="w-full justify-start gap-2"
+                  className="w-full justify-start gap-2 tap-target touch-manipulation"
                 >
                   <HomeIcon className="h-4 w-4" />
                   Dashboard

@@ -27,17 +27,18 @@ export const CollaborationButton: React.FC<CollaborationButtonProps> = ({ classN
         variant={isConnected ? "default" : "outline"}
         size="sm"
         onClick={handleClick}
-        className={className}
+        className={`${className} touch-manipulation`}
       >
         {isConnected ? (
-          <Wifi className="h-4 w-4 mr-2" />
+          <Wifi className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
         ) : (
-          <WifiOff className="h-4 w-4 mr-2" />
+          <WifiOff className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
         )}
-        <Users className="h-4 w-4 mr-2" />
-        Collaborate
+        <Users className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+        <span className="hidden sm:inline">Collaborate</span>
+        <span className="sm:hidden">Share</span>
         {isConnected && peers.length > 0 && (
-          <Badge variant="secondary" className="ml-2">
+          <Badge variant="secondary" className="ml-1 sm:ml-2 text-xs">
             {peers.length}
           </Badge>
         )}

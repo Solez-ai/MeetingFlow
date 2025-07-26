@@ -573,23 +573,25 @@ export function TaskManager() {
         onValueChange={(v: string) => setView(v as 'kanban' | 'today' | 'upcoming' | 'all')}
         className="mb-4"
       >
-        <TabsList className="grid grid-cols-4 mb-2">
-          <TabsTrigger value="kanban" className="text-xs">
-            <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5">
+        <TabsList className="grid grid-cols-4 mb-2 w-full">
+          <TabsTrigger value="kanban" className="text-xs sm:text-sm px-2 sm:px-3">
+            <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-1.5">
               <path d="M14 2.5C14 1.67157 13.3284 1 12.5 1H2.5C1.67157 1 1 1.67157 1 2.5V12.5C1 13.3284 1.67157 14 2.5 14H12.5C13.3284 14 14 13.3284 14 12.5V2.5ZM2.5 2H6V13H2.5C2.22386 13 2 12.7761 2 12.5V2.5C2 2.22386 2.22386 2 2.5 2ZM7 2H12.5C12.7761 2 13 2.22386 13 2.5V6H7V2ZM13 7V12.5C13 12.7761 12.7761 13 12.5 13H7V7H13Z" fill="currentColor" fillRule="evenodd" clipRule="evenodd"></path>
             </svg>
-            Kanban
+            <span className="hidden sm:inline">Kanban</span>
+            <span className="sm:hidden">Board</span>
           </TabsTrigger>
-          <TabsTrigger value="today" className="text-xs">
-            <Calendar className="h-4 w-4 mr-1.5" />
+          <TabsTrigger value="today" className="text-xs sm:text-sm px-2 sm:px-3">
+            <Calendar className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-1.5" />
             Today
           </TabsTrigger>
-          <TabsTrigger value="upcoming" className="text-xs">
-            <Clock className="h-4 w-4 mr-1.5" />
-            Upcoming
+          <TabsTrigger value="upcoming" className="text-xs sm:text-sm px-2 sm:px-3">
+            <Clock className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-1.5" />
+            <span className="hidden sm:inline">Upcoming</span>
+            <span className="sm:hidden">Soon</span>
           </TabsTrigger>
-          <TabsTrigger value="all" className="text-xs">
-            <CheckCircle className="h-4 w-4 mr-1.5" />
+          <TabsTrigger value="all" className="text-xs sm:text-sm px-2 sm:px-3">
+            <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-1.5" />
             All
           </TabsTrigger>
         </TabsList>
@@ -679,7 +681,7 @@ export function TaskManager() {
       <div className="flex-1 overflow-hidden">
         {view === 'kanban' && (
           <div className="h-full m-0">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 h-full">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 h-full">
               <TaskColumn
                 title="To Do"
                 tasks={sortedTodoTasks}

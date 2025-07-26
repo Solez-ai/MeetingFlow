@@ -52,12 +52,12 @@ export function NotesEditor() {
       <CardContent className="flex-grow overflow-auto relative">
         {editor ? (
           <div className="notes-editor">
-            <div className="editor-toolbar mb-2 flex gap-1.5 flex-wrap bg-muted/50 p-1.5 rounded-md">
+            <div className="editor-toolbar mb-2 flex gap-1 sm:gap-1.5 flex-wrap bg-muted/50 p-1 sm:p-1.5 rounded-md overflow-x-auto">
               <Button
                 size="sm"
                 variant="ghost"
                 onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
-                className={editor.isActive('heading', { level: 1 }) ? 'bg-accent' : ''}
+                className={`${editor.isActive('heading', { level: 1 }) ? 'bg-accent' : ''} px-2 sm:px-3 text-xs sm:text-sm`}
               >
                 H1
               </Button>
@@ -65,7 +65,7 @@ export function NotesEditor() {
                 size="sm"
                 variant="ghost"
                 onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-                className={editor.isActive('heading', { level: 2 }) ? 'bg-accent' : ''}
+                className={`${editor.isActive('heading', { level: 2 }) ? 'bg-accent' : ''} px-2 sm:px-3 text-xs sm:text-sm`}
               >
                 H2
               </Button>
@@ -154,7 +154,7 @@ export function NotesEditor() {
               </Button>
             </div>
             
-            <EditorContent editor={editor} className="border rounded-md p-3 min-h-[300px]" />
+            <EditorContent editor={editor} className="border rounded-md p-2 sm:p-3 min-h-[250px] sm:min-h-[300px] text-sm sm:text-base" />
             
             <AnimatePresence>
               {selectedText && (

@@ -6,6 +6,7 @@ import { Mic, MicOff } from 'lucide-react'
 import { useVoiceCommandContext } from './VoiceCommandProvider'
 import { useAppStore } from '@/store'
 import { VoiceCommands } from './VoiceCommands'
+import { useMobileDetection } from '@/hooks/useMobileDetection'
 import { cn } from '@/lib/utils'
 
 interface VoiceCommandButtonProps {
@@ -16,6 +17,7 @@ interface VoiceCommandButtonProps {
 export function VoiceCommandButton({ className, variant = 'floating' }: VoiceCommandButtonProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const { settings } = useAppStore()
+  const { isMobile, isTouchDevice } = useMobileDetection()
   const {
     isListening,
     isSupported,
@@ -32,9 +34,11 @@ export function VoiceCommandButton({ className, variant = 'floating' }: VoiceCom
       size={variant === 'floating' ? "lg" : "default"}
       className={cn(
         variant === 'floating' && [
-          "fixed bottom-6 right-6 z-50 rounded-full shadow-lg",
-          "h-14 w-14 p-0",
-          isListening && "animate-pulse"
+          "fixed z-50 rounded-full shadow-lg touch-manipulation",
+          isMobile ? "bottom-4 right-4 h-16 w-16" : "bottom-6 right-6 h-14 w-14",
+          "p-0",
+          isListening && "animate-pulse",
+          isTouchDevice && "active:scale-95"
         ],
         className
       )}
@@ -42,9 +46,9 @@ export function VoiceCommandButton({ className, variant = 'floating' }: VoiceCom
       disabled={!settings.voiceCommandsEnabled}
     >
       {isListening ? (
-        <MicOff className="h-5 w-5" />
+        <MicOff className={isMobile ? "h-6 w-6" : "h-5 w-5"} />
       ) : (
-        <Mic className="h-5 w-5" />
+        <Mic className={isMobile ? "h-6 w-6" : "h-5 w-5"} />
       )}
     </Button>
   )
