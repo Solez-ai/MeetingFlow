@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
-import { ErrorBoundary, RouterErrorBoundary } from '@/components/layout/ErrorBoundary'
+import { ErrorBoundary, RouterErrorBoundary, AsyncErrorBoundary, NetworkErrorBoundary } from '@/components/layout/ErrorBoundary'
 import { ThemeProvider } from '@/components/layout/ThemeProvider'
 import { AppLayout } from '@/components/layout/AppLayout'
 import { Dashboard } from '@/components/Dashboard'
@@ -12,8 +12,12 @@ import { useMeetingStore } from '@/store/meetingStore'
 import type { MeetingState } from '@/store/meetingStore'
 import { useShareableLink } from '@/hooks/useShareableLink'
 import { Toaster } from '@/components/ui/toaster'
+import { FeedbackContainer } from '@/components/ui/user-feedback'
+import { GlobalLoadingIndicator } from '@/components/ui/loading-states'
+import { BrowserCompatibilityChecker, NetworkStatus } from '@/components/ui/graceful-degradation'
 import { initConfetti } from '@/utils/confetti'
 import { ApiKeyProvider } from '@/components/transcription/ApiKeyProvider'
+import { checkBrowserFeatures } from '@/utils/errorHandling'
 
 // Create router with React Router v7 data router pattern
 const router = createBrowserRouter([
@@ -53,22 +57,40 @@ function App() {
   useShareableLink()
   
   useEffect(() => {
-    // Initialize meetings from localStorage on app start
-    initializeMeetings()
+    const initializeApp = async () => {
+      // Initialize meetings from localStorage on app start
+      initializeMeetings()
+      
+      // Initialize confetti system
+      initConfetti()
+      
+      // Check browser feature compatibility
+      checkBrowserFeatures()
+      
+      // Make feedback manager globally accessible for error handling
+      const { feedbackManager } = await import('@/components/ui/user-feedback')
+      ;(window as any).feedbackManager = feedbackManager
+    }
     
-    // Initialize confetti system
-    initConfetti()
+    initializeApp()
   }, [initializeMeetings])
 
   return (
     <ErrorBoundary>
-      <ThemeProvider>
-        <VoiceCommandProvider>
-          <ApiKeyProvider />
-          <RouterProvider router={router} />
-          <Toaster />
-        </VoiceCommandProvider>
-      </ThemeProvider>
+      <AsyncErrorBoundary>
+        <NetworkErrorBoundary>
+          <ThemeProvider>
+            <VoiceCommandProvider>
+              <BrowserCompatibilityChecker />
+              <GlobalLoadingIndicator />
+              <ApiKeyProvider />
+              <RouterProvider router={router} />
+              <Toaster />
+              <FeedbackContainer />
+            </VoiceCommandProvider>
+          </ThemeProvider>
+        </NetworkErrorBoundary>
+      </AsyncErrorBoundary>
     </ErrorBoundary>
   )
 }
