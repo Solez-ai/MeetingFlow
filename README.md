@@ -180,7 +180,6 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## 🎯 Roadmap
 
-- [ ] Mobile app (React Native)
 - [ ] Calendar integration
 - [ ] Advanced AI features
 - [ ] Team workspaces
