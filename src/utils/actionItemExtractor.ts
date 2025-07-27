@@ -254,15 +254,15 @@ export function extractTags(text: string): string[] {
   
   // Extract potential people/assignees
   const peopleIndicators = [
-    /\b(assign|assigned)\s+to\s+(\w+)\b/i,
-    /\b(\w+)\s+will\s+(do|handle|take\s+care\s+of)\b/i,
-    /\b(\w+)\s+is\s+responsible\s+for\b/i
+    { pattern: /\b(assign|assigned)\s+to\s+(\w+)\b/i, nameIndex: 2 },
+    { pattern: /\b(\w+)\s+will\s+(do|handle|take\s+care\s+of)\b/i, nameIndex: 1 },
+    { pattern: /\b(\w+)\s+is\s+responsible\s+for\b/i, nameIndex: 1 }
   ];
   
-  peopleIndicators.forEach(pattern => {
+  peopleIndicators.forEach(({ pattern, nameIndex }) => {
     const match = text.match(pattern);
-    if (match && match[2]) {
-      tags.push(`assignee:${match[2].toLowerCase()}`);
+    if (match && match[nameIndex]) {
+      tags.push(`assignee:${match[nameIndex].toLowerCase()}`);
     }
   });
   
