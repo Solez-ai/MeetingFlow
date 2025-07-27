@@ -1,104 +1,192 @@
-# MeetingFlow
+# MeetingFlow - AI-Powered Meeting Management
 
-MeetingFlow is a privacy-first, browser-based meeting productivity suite that helps you manage agendas, take notes, and track tasks - all without requiring a backend or cloud storage.
+A modern, feature-rich meeting management application with AI assistance, real-time collaboration, and comprehensive productivity tools.
 
-## Features
+## 🚀 Features
 
-- **Agenda Management**: Create and manage meeting agendas with time balancing
-- **Rich Text Notes**: Notion-style block editor powered by TipTap
-- **Task Management**: Kanban-style task board with filtering and sorting
-- **Transcription**: Upload audio files for automatic transcription (via AssemblyAI)
-- **Voice Commands**: Control the app hands-free with voice commands
-- **Real-time Collaboration**: Peer-to-peer collaboration without a server
-- **Export & Share**: Export to Markdown, PDF, or share via encoded links
+### Core Meeting Management
+- **Smart Agenda Creation** - Time-balanced agenda planning with drag-and-drop reordering
+- **Real-time Note Taking** - Rich text editor with collaborative editing
+- **Task Management** - Extract and track action items with priority levels
+- **Live Transcription** - AssemblyAI-powered speech-to-text conversion
 
-## Task Management System
+### AI Assistant (MeetingFlow Buddy)
+- **Meeting Summaries** - AI-generated meeting summaries with key insights
+- **Task Extraction** - Automatic identification of action items from meeting content
+- **Q&A Support** - Ask questions about meeting content and get intelligent responses
+- **Smart Reminders** - AI-suggested follow-up reminders and deadlines
 
-The task management system in MeetingFlow is designed to be intuitive and powerful, allowing you to:
+### Collaboration Features
+- **Real-time Collaboration** - Multiple users can edit simultaneously
+- **Screen Sharing** - WebRTC-powered screen sharing capabilities
+- **Voice Commands** - Hands-free meeting control
+- **Shareable Links** - Easy meeting sharing with QR codes
 
-### Creating Tasks
+### Productivity Tools
+- **Export Options** - PDF, Word, and JSON export formats
+- **Email Integration** - Send meeting summaries and action items
+- **Responsive Design** - Works seamlessly on desktop, tablet, and mobile
+- **Dark/Light Mode** - Customizable theme preferences
 
-Tasks can be created in multiple ways:
+## 🛠️ Technology Stack
 
-1. **Manually**: Click the "New Task" button in the task panel
-2. **From Notes**: Highlight text in the notes editor and click "Convert to Task"
-3. **From Transcripts**: Click "Make Task" on detected action items in transcripts
-4. **From Voice Commands**: Say "Mark action item [text]" to create a task
+- **Frontend**: React 19, TypeScript, Tailwind CSS
+- **State Management**: Zustand
+- **AI Integration**: OpenRouter API (Kimi K2 model)
+- **Transcription**: AssemblyAI
+- **Real-time**: WebRTC, Simple Peer
+- **Build Tool**: Vite
+- **Testing**: Vitest, Playwright
 
-### Task Organization
+## 🚀 Quick Start
 
-Tasks are organized in a Kanban board with three columns:
+### Prerequisites
+- Node.js 18+ 
+- npm or yarn
 
-- **To Do**: Tasks that need to be done
-- **In Progress**: Tasks that are currently being worked on
-- **Done**: Completed tasks
+### Installation
 
-You can drag and drop tasks between columns to update their status.
+1. **Clone the repository**
+   ```bash
+   git clone <your-repo-url>
+   cd meetingflow
+   ```
 
-### Task Views
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
 
-The task panel offers multiple views:
+3. **Set up environment variables**
+   ```bash
+   cp .env.example .env
+   ```
+   
+   Edit `.env` and add your API keys:
+   ```env
+   VITE_ASSEMBLYAI_API_KEY=your_assemblyai_key
+   VITE_EMAILJS_USER_ID=your_emailjs_user_id
+   VITE_EMAILJS_SERVICE_ID=your_emailjs_service_id
+   VITE_EMAILJS_TEMPLATE_ID=your_emailjs_template_id
+   VITE_OPENROUTER_API_KEY=your_openrouter_key
+   ```
 
-- **Kanban**: Traditional board view with columns for each status
-- **Today**: Tasks due today
-- **Upcoming**: Tasks due in the next 7 days
-- **All**: All tasks in a list view
+4. **Start development server**
+   ```bash
+   npm run dev
+   ```
 
-### Task Filtering and Sorting
+5. **Open your browser**
+   Navigate to `http://localhost:5173`
 
-You can filter tasks by:
+## 🔧 API Keys Setup
 
-- **Tags**: Filter by specific tags
-- **Priority**: Sort by High, Medium, or Low priority
-- **Due Date**: Sort by due date
-- **Creation Date**: Sort by when the task was created
+### AssemblyAI (Transcription)
+1. Sign up at [AssemblyAI](https://www.assemblyai.com/)
+2. Get your API key from the dashboard
+3. Add to `.env` as `VITE_ASSEMBLYAI_API_KEY`
 
-### Task Integration with Notes
+### OpenRouter (AI Assistant)
+1. Sign up at [OpenRouter](https://openrouter.ai/)
+2. Get your API key
+3. Add to `.env` as `VITE_OPENROUTER_API_KEY`
+4. The Kimi K2 model is free to use!
 
-The notes editor is integrated with the task system:
+### EmailJS (Email Integration)
+1. Sign up at [EmailJS](https://www.emailjs.com/)
+2. Create a service and template
+3. Add your User ID, Service ID, and Template ID to `.env`
 
-- Highlight text and convert it to a task
-- Task checkboxes in the editor automatically create tasks when checked
-- The system can detect potential tasks in your notes and suggest creating them
+## 📦 Build & Deploy
 
-### Task Notifications
+### Build for Production
+```bash
+npm run build
+```
 
-When tasks are created or completed:
+### Deploy to Netlify
+1. Push your code to GitHub
+2. Connect your GitHub repo to Netlify
+3. Set build command: `npm run build`
+4. Set publish directory: `dist`
+5. Add environment variables in Netlify dashboard
 
-- Visual feedback with toast notifications
-- Confetti animation for task completion
-- Email reminders for upcoming tasks (via EmailJS)
+### Deploy to Vercel
+1. Push your code to GitHub
+2. Import project in Vercel
+3. Add environment variables
+4. Deploy!
 
-## Getting Started
+## 🧪 Testing
 
-1. Clone this repository
-2. Install dependencies: `npm install`
-3. Start the development server: `npm run dev`
-4. Open your browser to `http://localhost:5173`
+```bash
+# Run all tests
+npm test
 
-## Technologies Used
+# Run tests in watch mode
+npm run test:ui
 
-- **React**: UI framework
-- **TypeScript**: Type safety
-- **Vite**: Build tool
-- **Zustand**: State management
-- **TipTap**: Rich text editor
-- **Tailwind CSS**: Styling
-- **Shadcn/UI**: UI components
-- **React Router**: Navigation
-- **AssemblyAI**: Transcription
-- **EmailJS**: Email notifications
-- **WebRTC**: Peer-to-peer collaboration
+# Run E2E tests
+npm run test:e2e
 
-## Privacy First
+# Generate coverage report
+npm run test:coverage
+```
 
-MeetingFlow is designed with privacy in mind:
+## 📱 Usage
 
-- All data is stored locally in your browser's localStorage
-- No data is sent to any server unless explicitly requested
-- Collaboration is peer-to-peer without a central server
-- API keys are stored in your browser and never shared
+### Creating a Meeting
+1. Click "New Meeting" on the dashboard
+2. Add meeting title and duration
+3. Create agenda items with time allocations
+4. Start the meeting!
 
-## License
+### Using AI Assistant
+1. Configure your OpenRouter API key in Settings
+2. Click the floating AI icon during meetings
+3. Use quick actions or ask questions naturally
+4. Get instant summaries and task extraction
 
-MIT
+### Collaboration
+1. Share meeting link with participants
+2. Enable real-time collaboration
+3. Use voice commands for hands-free control
+4. Share screens when needed
+
+## 🔒 Privacy & Security
+
+- **Local Storage**: Meeting data stored locally in your browser
+- **API Security**: All API keys are stored securely
+- **Privacy Controls**: Full control over AI data processing
+- **No Tracking**: No user analytics or tracking
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests for new features
+5. Submit a pull request
+
+## 📄 License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## 🆘 Support
+
+- **Documentation**: Check the `/docs` folder for detailed guides
+- **Issues**: Report bugs on GitHub Issues
+- **Discussions**: Join GitHub Discussions for questions
+
+## 🎯 Roadmap
+
+- [ ] Mobile app (React Native)
+- [ ] Calendar integration
+- [ ] Advanced AI features
+- [ ] Team workspaces
+- [ ] Meeting analytics
+- [ ] Custom AI prompts
+
+---
+
+**Made with ❤️ for productive meetings**
