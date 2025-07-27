@@ -70,6 +70,47 @@ export default {
         'screen-md': '768px',
         'screen-lg': '1024px',
       },
+      animation: {
+        'pulse-gentle': 'pulse-gentle 2s ease-in-out infinite',
+        'slide-up-fade-in': 'slide-up-fade-in 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+        'bounce': 'bounce 1s infinite',
+      },
+      keyframes: {
+        'pulse-gentle': {
+          '0%, 100%': { 
+            opacity: '1',
+            transform: 'scale(1)',
+          },
+          '50%': { 
+            opacity: '0.8',
+            transform: 'scale(1.05)',
+          },
+        },
+        'slide-up-fade-in': {
+          '0%': {
+            opacity: '0',
+            transform: 'translateY(20px) scale(0.95)',
+          },
+          '100%': {
+            opacity: '1',
+            transform: 'translateY(0) scale(1)',
+          },
+        },
+        'bounce': {
+          '0%, 20%, 53%, 80%, 100%': {
+            transform: 'translateY(0)',
+          },
+          '40%, 43%': {
+            transform: 'translateY(-8px)',
+          },
+          '70%': {
+            transform: 'translateY(-4px)',
+          },
+          '90%': {
+            transform: 'translateY(-2px)',
+          },
+        },
+      },
     },
   },
   plugins: [],

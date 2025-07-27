@@ -2,11 +2,13 @@
  * Storage utility for localStorage operations
  * 
  * This module provides type-safe access to localStorage with
- * error handling, validation, and automatic JSON parsing/stringifying.
+ * error handling, validation, automatic JSON parsing/stringifying,
+ * and performance optimizations including batching and caching.
  */
 
 import { validateMeeting } from './validation'
 import { Meeting } from '@/types'
+import { debounce, throttle } from './performance'
 
 // Storage keys
 export const STORAGE_KEYS = {
@@ -455,4 +457,253 @@ export function deleteMeeting(id: string): boolean {
   }
   
   return saveToStorage(STORAGE_KEYS.MEETINGS, filteredMeetings)
+}
+
+// Performance-optimized storage operations
+class OptimizedStorage {
+  private static instance: OptimizedStorage
+  private cache: Map<string, any> = new Map()
+  // private pendingWrites: Map<string, any> = new Map()
+  private writeQueue: Array<{ key: string; data: any }> = []
+  private isProcessingQueue = false
+
+  static getInstance(): OptimizedStorage {
+    if (!OptimizedStorage.instance) {
+      OptimizedStorage.instance = new OptimizedStorage()
+    }
+    return OptimizedStorage.instance
+  }
+
+  // Debounced batch write operation
+  private debouncedBatchWrite = debounce(() => {
+    this.processBatchWrite()
+  }, 500)
+
+  // Process batch write operations
+  private async processBatchWrite() {
+    if (this.isProcessingQueue || this.writeQueue.length === 0) return
+
+    this.isProcessingQueue = true
+    const batch = [...this.writeQueue]
+    this.writeQueue = []
+
+    try {
+      // Group writes by key to avoid duplicate operations
+      const uniqueWrites = new Map<string, any>()
+      batch.forEach(({ key, data }) => {
+        uniqueWrites.set(key, data)
+      })
+
+      // Execute all writes
+      const writePromises = Array.from(uniqueWrites.entries()).map(([key, data]) => {
+        return new Promise<void>((resolve) => {
+          try {
+            localStorage.setItem(key, JSON.stringify(data))
+            this.cache.set(key, data)
+            resolve()
+          } catch (error) {
+            console.error(`Failed to write ${key}:`, error)
+            resolve()
+          }
+        })
+      })
+
+      await Promise.all(writePromises)
+    } finally {
+      this.isProcessingQueue = false
+    }
+  }
+
+  // Optimized save with caching and batching
+  saveOptimized<T>(key: string, data: T, immediate = false): boolean {
+    try {
+      // Update cache immediately
+      this.cache.set(key, data)
+
+      if (immediate) {
+        // Write immediately for critical data
+        localStorage.setItem(key, JSON.stringify(data))
+        return true
+      } else {
+        // Queue for batch write
+        this.writeQueue.push({ key, data })
+        this.debouncedBatchWrite()
+        return true
+      }
+    } catch (error) {
+      console.error(`Error in optimized save for ${key}:`, error)
+      return false
+    }
+  }
+
+  // Optimized load with caching
+  loadOptimized<T>(key: string, defaultValue: T): T {
+    try {
+      // Check cache first
+      if (this.cache.has(key)) {
+        return this.cache.get(key)
+      }
+
+      // Load from localStorage
+      const item = localStorage.getItem(key)
+      if (!item) {
+        this.cache.set(key, defaultValue)
+        return defaultValue
+      }
+
+      const parsedData = JSON.parse(item) as T
+      this.cache.set(key, parsedData)
+      return parsedData
+    } catch (error) {
+      console.error(`Error in optimized load for ${key}:`, error)
+      this.cache.set(key, defaultValue)
+      return defaultValue
+    }
+  }
+
+  // Clear cache for a specific key
+  clearCache(key: string) {
+    this.cache.delete(key)
+  }
+
+  // Clear all cache
+  clearAllCache() {
+    this.cache.clear()
+  }
+
+  // Get cache size
+  getCacheSize(): number {
+    return this.cache.size
+  }
+
+  // Force flush pending writes
+  async flushPendingWrites(): Promise<void> {
+    this.debouncedBatchWrite.cancel?.()
+    await this.processBatchWrite()
+  }
+}
+
+export const optimizedStorage = OptimizedStorage.getInstance()
+
+// Optimized meeting operations
+export function saveOptimizedMeeting(meeting: Meeting, immediate = false): boolean {
+  // Validate first
+  const validationResult = validateMeeting(meeting)
+  if (!validationResult.valid) {
+    console.error('Meeting validation failed:', validationResult.errors)
+    return false
+  }
+
+  // Save current meeting
+  const currentSaved = optimizedStorage.saveOptimized(STORAGE_KEYS.CURRENT_MEETING, meeting, immediate)
+  
+  // Update meetings list
+  const meetings = optimizedStorage.loadOptimized<Meeting[]>(STORAGE_KEYS.MEETINGS, [])
+  const existingIndex = meetings.findIndex(m => m.id === meeting.id)
+  
+  if (existingIndex >= 0) {
+    meetings[existingIndex] = meeting
+  } else {
+    meetings.push(meeting)
+  }
+  
+  const listSaved = optimizedStorage.saveOptimized(STORAGE_KEYS.MEETINGS, meetings, immediate)
+  
+  return currentSaved && listSaved
+}
+
+export function loadOptimizedMeeting(id: string): Meeting | null {
+  const meetings = optimizedStorage.loadOptimized<Meeting[]>(STORAGE_KEYS.MEETINGS, [])
+  return meetings.find(m => m.id === id) || null
+}
+
+// Throttled storage operations for high-frequency updates
+export const throttledSaveMeeting = throttle((meeting: Meeting) => {
+  saveOptimizedMeeting(meeting, false)
+}, 1000)
+
+// Storage cleanup utilities
+export function cleanupOldData(maxAge: number = 30 * 24 * 60 * 60 * 1000) { // 30 days default
+  try {
+    const meetings = loadFromStorage<Meeting[]>(STORAGE_KEYS.MEETINGS, [])
+    const now = Date.now()
+    
+    const recentMeetings = meetings.filter(meeting => {
+      const meetingTime = new Date(meeting.startTime).getTime()
+      return (now - meetingTime) < maxAge
+    })
+    
+    if (recentMeetings.length !== meetings.length) {
+      saveToStorage(STORAGE_KEYS.MEETINGS, recentMeetings)
+      console.log(`Cleaned up ${meetings.length - recentMeetings.length} old meetings`)
+    }
+  } catch (error) {
+    console.error('Error during data cleanup:', error)
+  }
+}
+
+// Storage compression for large data
+export function compressStorageData(data: any): string {
+  try {
+    // Simple compression by removing unnecessary whitespace and optimizing structure
+    const jsonString = JSON.stringify(data)
+    
+    // Remove unnecessary whitespace
+    const compressed = jsonString
+      .replace(/\s+/g, ' ')
+      .replace(/\s*([{}[\]:,])\s*/g, '$1')
+    
+    return compressed
+  } catch (error) {
+    console.error('Error compressing data:', error)
+    return JSON.stringify(data)
+  }
+}
+
+export function decompressStorageData(compressedData: string): any {
+  try {
+    return JSON.parse(compressedData)
+  } catch (error) {
+    console.error('Error decompressing data:', error)
+    return null
+  }
+}
+
+// Storage monitoring and optimization
+export function monitorStorageUsage() {
+  const usage = getStorageSize()
+  const quota = 5 * 1024 // 5MB typical localStorage limit
+  const usagePercent = (usage / quota) * 100
+  
+  if (usagePercent > 80) {
+    console.warn(`Storage usage is at ${usagePercent.toFixed(1)}% (${usage}KB/${quota}KB)`)
+    
+    // Trigger cleanup if usage is high
+    if (usagePercent > 90) {
+      cleanupOldData(7 * 24 * 60 * 60 * 1000) // Clean data older than 7 days
+    }
+  }
+  
+  return {
+    usage,
+    quota,
+    usagePercent,
+    available: quota - usage
+  }
+}
+
+// Initialize storage monitoring
+export function initializeStorageMonitoring() {
+  // Monitor storage usage periodically
+  setInterval(() => {
+    monitorStorageUsage()
+  }, 60000) // Check every minute
+
+  // Cleanup old data on app start
+  cleanupOldData()
+
+  // Flush pending writes before page unload
+  window.addEventListener('beforeunload', () => {
+    optimizedStorage.flushPendingWrites()
+  })
 }

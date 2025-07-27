@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui
 import { Button } from '../ui/button'
 import { VoiceCommands } from '../voice/VoiceCommands'
 import { VoiceCommandTest } from '../voice/VoiceCommandTest'
+import { AISettings } from '../ai/AISettings'
 import { useState } from 'react'
 
 export function Settings() {
@@ -84,20 +85,8 @@ export function Settings() {
           </CardContent>
         </Card>
 
-        {/* API Settings */}
-        <Card>
-          <CardHeader>
-            <CardTitle>API Configuration</CardTitle>
-            <CardDescription>
-              Manage your external service integrations
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground">
-              API configuration will be implemented in future tasks
-            </p>
-          </CardContent>
-        </Card>
+        {/* AI Assistant Settings */}
+        <AISettings />
 
         {/* Privacy Settings */}
         <Card>

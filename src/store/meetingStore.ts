@@ -1,7 +1,11 @@
 import { create } from 'zustand'
+import { subscribeWithSelector } from 'zustand/middleware'
+import { immer } from 'zustand/middleware/immer'
 import { v4 as uuidv4 } from 'uuid'
 import { Meeting, Task, TranscriptChunk, TranscriptionStatus, AgendaItem } from '@/types'
 import { initializeAssemblyAI } from '@/services/transcriptionService'
+import { throttledSaveMeeting } from '@/utils/storage'
+import { performanceMonitor } from '@/utils/performance'
 
 export interface MeetingState {
   meetings: Meeting[]
@@ -72,7 +76,9 @@ const saveMeetingsToStorage = (meetings: Meeting[]) => {
   }
 }
 
-export const useMeetingStore = create<MeetingState>((set, get) => ({
+export const useMeetingStore = create<MeetingState>()(
+  subscribeWithSelector(
+    immer((set, get) => ({
   meetings: [],
   currentMeetingId: null,
   currentMeeting: null,
@@ -96,33 +102,33 @@ export const useMeetingStore = create<MeetingState>((set, get) => ({
   },
   
   createMeeting: (title) => {
-    const newMeeting: Meeting = {
-      id: uuidv4(),
-      title,
-      startTime: new Date().toISOString(),
-      agenda: [],
-      notes: [],
-      tasks: [],
-      transcripts: [],
-      metadata: {
-        duration: 60,
-        participants: [],
-        tags: []
+    return performanceMonitor.measureFunction('createMeeting', () => {
+      const newMeeting: Meeting = {
+        id: uuidv4(),
+        title,
+        startTime: new Date().toISOString(),
+        agenda: [],
+        notes: [],
+        tasks: [],
+        transcripts: [],
+        metadata: {
+          duration: 60,
+          participants: [],
+          tags: []
+        }
       }
-    }
-    
-    set(state => {
-      const updatedMeetings = [...state.meetings, newMeeting]
-      saveMeetingsToStorage(updatedMeetings)
       
-      return {
-        meetings: updatedMeetings,
-        currentMeetingId: newMeeting.id,
-        currentMeeting: newMeeting
-      }
+      set(state => {
+        state.meetings.push(newMeeting)
+        state.currentMeetingId = newMeeting.id
+        state.currentMeeting = newMeeting
+      })
+      
+      // Use optimized storage with throttling
+      throttledSaveMeeting(newMeeting)
+      
+      return newMeeting
     })
-    
-    return newMeeting
   },
   
   loadMeeting: (id) => {
@@ -163,18 +169,25 @@ export const useMeetingStore = create<MeetingState>((set, get) => ({
   },
   
   updateMeeting: (id, updates) => {
-    set(state => {
-      const updatedMeetings = state.meetings.map(meeting => 
-        meeting.id === id ? { ...meeting, ...updates } : meeting
-      )
+    performanceMonitor.measureFunction('updateMeeting', () => {
+      set(state => {
+        const meetingIndex = state.meetings.findIndex(m => m.id === id)
+        if (meetingIndex >= 0) {
+          const meeting = state.meetings[meetingIndex]
+          if (meeting) {
+            Object.assign(meeting, updates)
+            
+            if (state.currentMeetingId === id) {
+              state.currentMeeting = meeting
+            }
+          }
+        }
+      })
       
-      saveMeetingsToStorage(updatedMeetings)
-      
-      return {
-        meetings: updatedMeetings,
-        currentMeeting: state.currentMeetingId === id 
-          ? updatedMeetings.find(m => m.id === id) || null
-          : state.currentMeeting
+      // Use throttled save for frequent updates
+      const updatedMeeting = get().meetings.find(m => m.id === id)
+      if (updatedMeeting) {
+        throttledSaveMeeting(updatedMeeting)
       }
     })
   },
@@ -579,4 +592,4 @@ export const useMeetingStore = create<MeetingState>((set, get) => ({
       saveMeetingsToStorage(state.meetings)
     }
   }
-}))
+}))))

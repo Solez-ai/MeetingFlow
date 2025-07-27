@@ -92,3 +92,6 @@ export * from './voice'
 
 // Re-export collaboration types
 export * from './collaboration'
+
+// Re-export AI types
+export * from './ai'

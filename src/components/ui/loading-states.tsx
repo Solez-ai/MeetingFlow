@@ -4,6 +4,9 @@
 
 import { cn } from "@/lib/utils"
 import { LoadingSpinner } from "./loading"
+import { useState, useEffect } from "react"
+import { AlertTriangle, RefreshCw } from "lucide-react"
+import { Button } from "./button"
 
 interface LoadingStateProps {
   isLoading: boolean
@@ -351,6 +354,18 @@ export function GlobalLoadingIndicator() {
             : `Loading ${activeStates.length} items...`
           }
         </span>
+      </div>
+    </div>
+  )
+}
+
+// Component loading spinner for lazy-loaded components
+export function ComponentLoadingSpinner() {
+  return (
+    <div className="flex items-center justify-center min-h-[400px]">
+      <div className="text-center space-y-4">
+        <LoadingSpinner size="lg" />
+        <p className="text-sm text-muted-foreground">Loading component...</p>
       </div>
     </div>
   )
